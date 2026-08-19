@@ -87,10 +87,22 @@ export interface Badge {
   category: string;
 }
 
-export type ViewTab = "tracker" | "timeline" | "focus" | "insights" | "copilot" | "settings";
+export type ViewTab =
+  | "tracker"
+  | "matrix"
+  | "roadmap"
+  | "timeline"
+  | "focus"
+  | "insights"
+  | "trophies"
+  | "copilot"
+  | "settings";
+
+export type CardLayoutMode = "grid" | "board" | "list";
 
 export type ThemeAccent = "emerald" | "violet" | "amber" | "cyan" | "rose" | "slate";
 export type WorkspaceDensity = "compact" | "balanced" | "spacious";
+export type BackgroundAnimationMode = "aurora" | "particles" | "mesh" | "cyberpunk" | "none";
 
 export interface UIThemeConfig {
   accent: ThemeAccent;
@@ -99,23 +111,33 @@ export interface UIThemeConfig {
   showMilestonesOnCards: boolean;
   soundEffectsEnabled: boolean;
   ambientSoundPreset: "none" | "binaural" | "pink" | "brown";
+  ambientBackground: BackgroundAnimationMode;
   customAppTitle: string;
   avatarIcon: string;
   avatarColor: string;
   quickLogDefaultStep: number;
 }
 
-export interface UserProfile {
+export interface UserProfileAccount {
+  id: string;
   name: string;
   role: string;
+  avatarIcon: string; // Emoji e.g. "🚀", "⚡", "🧘", "🎨", "💻", "🧠" or Lucide icon
+  avatarColor: string; // Hex color
   northStarMotto: string;
   targetFocusHoursPerDay: number;
-  wakeTime: string;
-  sleepTime: string;
+  wakeTime?: string;
+  sleepTime?: string;
   selectedLifeSpheres: Category[];
   isSetupCompleted: boolean;
   themeConfig: UIThemeConfig;
   customNotes?: string;
+  pinCode?: string;
+  createdAt: string;
+}
+
+export interface UserProfile extends UserProfileAccount {
+  // Aliases for active profile
 }
 
 export interface AICoachFeedback {

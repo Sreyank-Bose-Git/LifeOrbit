@@ -1,6 +1,6 @@
 {
   "name": "LifeOrbit Planner & Activity Tracker",
-  "description": "Cross-device, local-first planner and universal activity tracker for quantifiable targets, habits, milestones, AI scheduling, and deep progress insights.",
+  "description": "Cross-device, local-first planner and universal activity tracker featuring Netflix-style multi-account spaces, animated ambient background engine, quantifiable targets, habits, AI scheduling, and deep progress insights.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

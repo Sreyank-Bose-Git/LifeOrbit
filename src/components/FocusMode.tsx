@@ -12,6 +12,8 @@ import {
   Zap,
   Coffee,
   Maximize2,
+  CloudRain,
+  Radio,
 } from "lucide-react";
 import { Endeavor } from "../types";
 import { focusAudio } from "../lib/audio";
@@ -35,7 +37,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
   const [durationMinutes, setDurationMinutes] = useState<number>(25);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(25 * 60);
   const [isActive, setIsActive] = useState(false);
-  const [soundMode, setSoundMode] = useState<"none" | "binaural" | "noise">("none");
+  const [soundMode, setSoundMode] = useState<"none" | "binaural" | "noise" | "rain">("none");
   const [volume, setVolume] = useState(0.2);
   const [sessionNotes, setSessionNotes] = useState("");
 
@@ -86,13 +88,15 @@ export const FocusMode: React.FC<FocusModeProps> = ({
   }, [isActive, timeLeftSeconds, selectedEndeavorId, durationMinutes, sessionNotes, onFinishSession]);
 
   // Handle Audio toggle
-  const toggleSound = (type: "binaural" | "noise") => {
+  const toggleSound = (type: "binaural" | "noise" | "rain") => {
     if (soundMode === type) {
       focusAudio.stop();
       setSoundMode("none");
     } else {
       if (type === "binaural") {
         focusAudio.playBinaural(210, 10, volume);
+      } else if (type === "rain") {
+        focusAudio.playRain(volume);
       } else {
         focusAudio.playNoise("pink", volume);
       }
@@ -267,39 +271,51 @@ export const FocusMode: React.FC<FocusModeProps> = ({
           </button>
         </div>
 
-        {/* Focus Sound Generator (Binaural 10Hz Beats & Pink Noise) */}
+        {/* Focus Sound Generator (Binaural 10Hz Beats & Pink Noise & Gentle Rain) */}
         <div className="w-full max-w-md bg-[#141414] border border-white/5 rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-white flex items-center space-x-1.5">
               <Sparkles className="w-4 h-4 text-emerald-400" />
-              <span>Acoustic Focus Generator</span>
+              <span>Acoustic Focus Synthesizer</span>
             </span>
-            <span className="text-[10px] text-slate-500">Web Audio Synthesizer</span>
+            <span className="text-[10px] text-slate-500">Real-time Web Audio</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => toggleSound("binaural")}
-              className={`py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 cursor-pointer active:scale-95 transition-all duration-150 ${
+              className={`py-2 px-2.5 rounded-xl text-[11px] font-semibold flex flex-col items-center justify-center space-y-1 cursor-pointer active:scale-95 transition-all duration-150 ${
                 soundMode === "binaural"
                   ? "bg-emerald-500 text-black font-bold shadow-xs"
                   : "bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/15"
               }`}
             >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span>10Hz Alpha Waves</span>
+              <Radio className="w-4 h-4" />
+              <span>10Hz Alpha</span>
             </button>
 
             <button
               onClick={() => toggleSound("noise")}
-              className={`py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 cursor-pointer active:scale-95 transition-all duration-150 ${
+              className={`py-2 px-2.5 rounded-xl text-[11px] font-semibold flex flex-col items-center justify-center space-y-1 cursor-pointer active:scale-95 transition-all duration-150 ${
                 soundMode === "noise"
                   ? "bg-emerald-500 text-black font-bold shadow-xs"
                   : "bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/15"
               }`}
             >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span>Deep Pink Noise</span>
+              <Volume2 className="w-4 h-4" />
+              <span>Pink Noise</span>
+            </button>
+
+            <button
+              onClick={() => toggleSound("rain")}
+              className={`py-2 px-2.5 rounded-xl text-[11px] font-semibold flex flex-col items-center justify-center space-y-1 cursor-pointer active:scale-95 transition-all duration-150 ${
+                soundMode === "rain"
+                  ? "bg-emerald-500 text-black font-bold shadow-xs"
+                  : "bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 hover:border-white/15"
+              }`}
+            >
+              <CloudRain className="w-4 h-4" />
+              <span>Gentle Rain</span>
             </button>
           </div>
 

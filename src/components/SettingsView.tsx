@@ -20,9 +20,12 @@ import {
   Layout,
   Award,
   ShieldCheck,
+  Users,
+  Eye,
+  Sparkle,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { UserProfile, UserStats, ThemeAccent, WorkspaceDensity, Category, Endeavor } from "../types";
+import { UserProfile, UserStats, ThemeAccent, WorkspaceDensity, Category, BackgroundAnimationMode } from "../types";
 import { THEME_ACCENTS, DENSITY_CONFIG, ROLE_PRESETS } from "../lib/theme";
 
 interface SettingsViewProps {
@@ -31,6 +34,7 @@ interface SettingsViewProps {
   onUpdateProfile: (profile: UserProfile) => void;
   onOpenSetupWizard: () => void;
   onResetDefaults: () => void;
+  onOpenProfileHub?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -39,6 +43,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onUpdateProfile,
   onOpenSetupWizard,
   onResetDefaults,
+  onOpenProfileHub,
 }) => {
   const [formData, setFormData] = useState<UserProfile>({ ...profile });
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -239,6 +244,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               })}
             </div>
 
+            {/* Ambient Background Animation Mode */}
+            <div className="pt-3 border-t border-white/5">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Ambient Background Animation
+                </label>
+                <span className="text-[11px] font-semibold text-emerald-400">GPU Accelerated</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {(
+                  [
+                    { id: "aurora", label: "Aurora Glow", desc: "Drifting smooth light" },
+                    { id: "particles", label: "Starfield", desc: "Connected constellation" },
+                    { id: "cyberpunk", label: "Cyber Matrix", desc: "Laser scanline grid" },
+                    { id: "mesh", label: "Quantum Mesh", desc: "Geometric wave field" },
+                    { id: "none", label: "OLED Dark", desc: "Pure minimal canvas" },
+                  ] as { id: BackgroundAnimationMode; label: string; desc: string }[]
+                ).map((b) => {
+                  const isSelected = (formData.themeConfig.ambientBackground || "aurora") === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          themeConfig: { ...formData.themeConfig, ambientBackground: b.id },
+                        })
+                      }
+                      className={`p-3 rounded-2xl border text-left transition cursor-pointer active:scale-95 ${
+                        isSelected
+                          ? `${currentTheme.bgSubtle} ${currentTheme.borderSubtle} text-white font-bold`
+                          : "bg-[#141414] border-white/5 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <span className="text-xs block font-bold text-white mb-0.5">{b.label}</span>
+                      <span className="text-[10px] text-slate-500 font-normal leading-tight block">{b.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Density Selector */}
             <div className="pt-3 border-t border-white/5">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -272,6 +320,48 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Multi-Profile & Account Hub Banner Card */}
+          {onOpenProfileHub && (
+            <div className="bg-[#0D0D0D] rounded-3xl p-6 border border-white/5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                <div className="flex items-center space-x-2.5">
+                  <Users className={`w-5 h-5 ${currentTheme.textAccent}`} />
+                  <div>
+                    <h3 className="font-bold text-white text-base">Multi-Space Accounts & Profiles</h3>
+                    <p className="text-xs text-slate-400">Manage multiple distinct workspaces like Netflix</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onOpenProfileHub}
+                  className="px-4 py-2 bg-white text-black font-bold text-xs rounded-xl shadow-md hover:bg-slate-200 transition cursor-pointer active:scale-95"
+                >
+                  Manage Profiles
+                </button>
+              </div>
+
+              <div className="p-4 bg-[#141414] rounded-2xl border border-white/5 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-xs"
+                    style={{ backgroundColor: `${formData.avatarColor || "#10b981"}25` }}
+                  >
+                    <span>{formData.avatarIcon || "🚀"}</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">{formData.name}</div>
+                    <div className="text-xs text-slate-400">{formData.role || "Active Account"}</div>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                  Current Active Space
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Daily Anchors & Display Toggles */}

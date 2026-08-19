@@ -1,36 +1,107 @@
-import { Endeavor, ProgressLog, TimeBlock, UserStats, Badge, UserProfile, UIThemeConfig } from "../types";
+import {
+  Endeavor,
+  ProgressLog,
+  TimeBlock,
+  UserStats,
+  Badge,
+  UserProfile,
+  UserProfileAccount,
+  UIThemeConfig,
+} from "../types";
 
 const STORAGE_KEYS = {
-  ENDEAVORS: "lifeorbit_endeavors_v2",
-  LOGS: "lifeorbit_logs_v2",
-  TIMEBLOCKS: "lifeorbit_timeblocks_v2",
-  STATS: "lifeorbit_stats_v2",
-  PROFILE: "lifeorbit_profile_v2",
+  PROFILES_LIST: "lifeorbit_profiles_v3",
+  ACTIVE_PROFILE_ID: "lifeorbit_active_profile_id_v3",
+  // Scoped prefix: lifeorbit_{profileId}_...
 };
 
-export const DEFAULT_PROFILE: UserProfile = {
-  name: "Alex Rivera",
-  role: "SaaS Founder & High Performer",
-  northStarMotto: "Compound daily momentum with uncompromising consistency.",
-  targetFocusHoursPerDay: 4,
-  wakeTime: "06:30",
-  sleepTime: "22:30",
-  selectedLifeSpheres: ["career", "health", "learning", "finance", "mindfulness"],
-  isSetupCompleted: false,
-  themeConfig: {
-    accent: "emerald",
-    density: "balanced",
-    showStreakBadges: true,
-    showMilestonesOnCards: true,
-    soundEffectsEnabled: true,
-    ambientSoundPreset: "binaural",
-    customAppTitle: "LIFEORBIT OS",
-    avatarIcon: "Sparkles",
-    avatarColor: "#10b981",
-    quickLogDefaultStep: 1,
-  },
-  customNotes: "Focus on high-leverage software milestones and zone 2 aerobic conditioning.",
+export const DEFAULT_THEME_CONFIG: UIThemeConfig = {
+  accent: "emerald",
+  density: "balanced",
+  showStreakBadges: true,
+  showMilestonesOnCards: true,
+  soundEffectsEnabled: true,
+  ambientSoundPreset: "binaural",
+  ambientBackground: "aurora",
+  customAppTitle: "LIFEORBIT OS",
+  avatarIcon: "🚀",
+  avatarColor: "#10b981",
+  quickLogDefaultStep: 1,
 };
+
+export const INITIAL_PROFILES: UserProfileAccount[] = [
+  {
+    id: "prof_work",
+    name: "Alex Rivera",
+    role: "SaaS Founder & High Performer",
+    avatarIcon: "🚀",
+    avatarColor: "#10b981",
+    northStarMotto: "Compound daily momentum with uncompromising consistency.",
+    targetFocusHoursPerDay: 4,
+    wakeTime: "06:30",
+    sleepTime: "22:30",
+    selectedLifeSpheres: ["career", "finance", "learning", "health", "mindfulness"],
+    isSetupCompleted: true,
+    themeConfig: {
+      ...DEFAULT_THEME_CONFIG,
+      accent: "emerald",
+      ambientBackground: "aurora",
+      avatarIcon: "🚀",
+      avatarColor: "#10b981",
+      customAppTitle: "ALEX • FOUNDER OS",
+    },
+    customNotes: "Focus on high-leverage software milestones and zone 2 aerobic conditioning.",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: "prof_fitness",
+    name: "Maya Chen",
+    role: "Marathon Runner & Biohacker",
+    avatarIcon: "🧘",
+    avatarColor: "#8b5cf6",
+    northStarMotto: "Master the breath, fortify the body, sharpen the spirit.",
+    targetFocusHoursPerDay: 3,
+    wakeTime: "05:45",
+    sleepTime: "21:30",
+    selectedLifeSpheres: ["health", "mindfulness", "learning", "personal"],
+    isSetupCompleted: true,
+    themeConfig: {
+      ...DEFAULT_THEME_CONFIG,
+      accent: "violet",
+      ambientBackground: "particles",
+      avatarIcon: "🧘",
+      avatarColor: "#8b5cf6",
+      customAppTitle: "MAYA • ATHLETICS & ZEN",
+    },
+    customNotes: "Marathon prep block 2: 55km weekly volume + 20 min morning pranayama.",
+    createdAt: "2026-02-15T00:00:00.000Z",
+  },
+  {
+    id: "prof_creative",
+    name: "Neo Studio",
+    role: "Design Director & Synthesist",
+    avatarIcon: "🎨",
+    avatarColor: "#f59e0b",
+    northStarMotto: "Design with mathematical precision and boundless imagination.",
+    targetFocusHoursPerDay: 5,
+    wakeTime: "08:00",
+    sleepTime: "00:30",
+    selectedLifeSpheres: ["creative", "learning", "career", "mindfulness"],
+    isSetupCompleted: true,
+    themeConfig: {
+      ...DEFAULT_THEME_CONFIG,
+      accent: "amber",
+      ambientBackground: "mesh",
+      avatarIcon: "🎨",
+      avatarColor: "#f59e0b",
+      customAppTitle: "NEO • CREATIVE LAB",
+    },
+    customNotes: "Finish interactive 3D spatial design library and electronic music EP.",
+    createdAt: "2026-03-01T00:00:00.000Z",
+  },
+];
+
+export const DEFAULT_PROFILE: UserProfile = INITIAL_PROFILES[0];
 
 const INITIAL_BADGES: Badge[] = [
   {
@@ -71,7 +142,7 @@ const INITIAL_BADGES: Badge[] = [
   },
 ];
 
-const INITIAL_ENDEAVORS: Endeavor[] = [
+const INITIAL_ENDEAVORS_WORK: Endeavor[] = [
   {
     id: "end-1",
     title: "Read 24 Non-Fiction Books",
@@ -116,7 +187,7 @@ const INITIAL_ENDEAVORS: Endeavor[] = [
     description: "15 minutes of guided Vipassana breathing for calm focus before work.",
     category: "mindfulness",
     archetype: "habit",
-    targetValue: 30, // 30-day streak goal
+    targetValue: 30,
     startValue: 0,
     currentValue: 12,
     unit: "days",
@@ -132,12 +203,6 @@ const INITIAL_ENDEAVORS: Endeavor[] = [
     reminderEnabled: true,
     tags: ["zen", "breathing", "mental-health"],
     history: {
-      "2026-08-08": 1,
-      "2026-08-09": 1,
-      "2026-08-10": 1,
-      "2026-08-11": 1,
-      "2026-08-12": 1,
-      "2026-08-13": 1,
       "2026-08-14": 1,
       "2026-08-15": 1,
       "2026-08-16": 1,
@@ -159,7 +224,7 @@ const INITIAL_ENDEAVORS: Endeavor[] = [
     description: "Ship a full-stack production application with auth, billing, and automated workflows.",
     category: "career",
     archetype: "milestone",
-    targetValue: 100, // 100%
+    targetValue: 100,
     startValue: 0,
     currentValue: 65,
     unit: "%",
@@ -224,44 +289,154 @@ const INITIAL_ENDEAVORS: Endeavor[] = [
     createdAt: "2026-01-15T00:00:00.000Z",
     updatedAt: new Date().toISOString(),
   },
+];
+
+const INITIAL_ENDEAVORS_FITNESS: Endeavor[] = [
   {
-    id: "end-5",
-    title: "5K Running & Aerobic Conditioning",
-    description: "Zone 2 aerobic base building: run 5 kilometers 3 times every week under 25 minutes.",
+    id: "end-fit-1",
+    title: "Run 500km Marathon Prep Volume",
+    description: "Building base aerobic capacity for the autumn marathon qualifier.",
     category: "health",
-    archetype: "habit",
-    targetValue: 20, // 20 sessions target
+    archetype: "meter",
+    targetValue: 500,
     startValue: 0,
-    currentValue: 8,
-    unit: "runs",
+    currentValue: 240,
+    unit: "km",
     frequency: "weekly",
     status: "active",
-    priority: "medium",
-    streakCount: 3,
-    bestStreak: 6,
-    color: "#ef4444",
+    priority: "high",
+    streakCount: 14,
+    bestStreak: 28,
+    color: "#8b5cf6",
     icon: "Activity",
-    difficulty: "medium",
-    scheduledTime: "06:30",
+    difficulty: "hard",
+    scheduledTime: "06:00",
     reminderEnabled: true,
-    tags: ["fitness", "cardio", "endurance"],
+    tags: ["running", "endurance", "marathon"],
     history: {
-      "2026-08-12": 1,
-      "2026-08-14": 1,
+      "2026-08-14": 12,
+      "2026-08-16": 15,
+      "2026-08-18": 18,
+      "2026-08-19": 10,
+    },
+    milestones: [
+      { id: "mf1", title: "100km First Base Month", completed: true, completedAt: "2026-06-30" },
+      { id: "mf2", title: "250km Halfway Milestone", completed: false },
+      { id: "mf3", title: "500km Race Ready Peak", completed: false },
+    ],
+    createdAt: "2026-06-01T00:00:00.000Z",
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "end-fit-2",
+    title: "Cold Plunge & Breathwork Protocol",
+    description: "3 minutes cold water immersion at 48°F followed by box breathing.",
+    category: "health",
+    archetype: "habit",
+    targetValue: 21,
+    startValue: 0,
+    currentValue: 16,
+    unit: "days",
+    frequency: "daily",
+    status: "active",
+    priority: "medium",
+    streakCount: 16,
+    bestStreak: 21,
+    color: "#06b6d4",
+    icon: "Sparkles",
+    difficulty: "hard",
+    scheduledTime: "07:30",
+    reminderEnabled: true,
+    tags: ["biohacking", "cold", "recovery"],
+    history: {
+      "2026-08-15": 1,
+      "2026-08-16": 1,
       "2026-08-17": 1,
+      "2026-08-18": 1,
       "2026-08-19": 1,
     },
     milestones: [
-      { id: "m1", title: "Complete 5th run under 28m", completed: true, completedAt: "2026-08-14" },
-      { id: "m2", title: "Sub-25 min 5K milestone", completed: false },
-      { id: "m3", title: "10K distance breakthrough", completed: false },
+      { id: "mb1", title: "7-Day Cold Discipline", completed: true, completedAt: "2026-08-10" },
+      { id: "mb2", title: "21-Day Neural Adaptation", completed: false },
     ],
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: new Date().toISOString(),
   },
 ];
 
-const INITIAL_TIMEBLOCKS: TimeBlock[] = [
+const INITIAL_ENDEAVORS_CREATIVE: Endeavor[] = [
+  {
+    id: "end-cr-1",
+    title: "Produce 6-Track Ambient Electronic EP",
+    description: "Modular synthesizer soundscapes mixed and mastered for vinyl release.",
+    category: "creative",
+    archetype: "milestone",
+    targetValue: 100,
+    startValue: 0,
+    currentValue: 50,
+    unit: "%",
+    frequency: "custom",
+    status: "active",
+    priority: "high",
+    streakCount: 5,
+    bestStreak: 12,
+    color: "#f59e0b",
+    icon: "Music",
+    difficulty: "medium",
+    scheduledTime: "20:00",
+    reminderEnabled: false,
+    tags: ["audio", "music", "synth"],
+    history: {
+      "2026-08-16": 20,
+      "2026-08-17": 10,
+      "2026-08-18": 10,
+      "2026-08-19": 10,
+    },
+    milestones: [
+      { id: "mc1", title: "Tracks 1 & 2 Rough Demo Arrangements", completed: true, weight: 30, completedAt: "2026-08-05" },
+      { id: "mc2", title: "Tracks 3 & 4 Sound Design & Stems", completed: true, weight: 30, completedAt: "2026-08-18" },
+      { id: "mc3", title: "Final Stereo Mastering & Cover Art", completed: false, weight: 40 },
+    ],
+    createdAt: "2026-08-01T00:00:00.000Z",
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "end-cr-2",
+    title: "Write 30 Design Essays & Case Studies",
+    description: "Deep-dives into cognitive ergonomics and tactile software aesthetics.",
+    category: "learning",
+    archetype: "meter",
+    targetValue: 30,
+    startValue: 0,
+    currentValue: 11,
+    unit: "essays",
+    frequency: "weekly",
+    status: "active",
+    priority: "medium",
+    streakCount: 7,
+    bestStreak: 14,
+    color: "#ec4899",
+    icon: "PenTool",
+    difficulty: "medium",
+    scheduledTime: "10:30",
+    reminderEnabled: true,
+    tags: ["writing", "design", "craft"],
+    history: {
+      "2026-08-10": 1,
+      "2026-08-14": 1,
+      "2026-08-18": 1,
+    },
+    milestones: [
+      { id: "me1", title: "Publish 10 Essays", completed: true, completedAt: "2026-08-12" },
+      { id: "me2", title: "Publish 20 Essays", completed: false },
+      { id: "me3", title: "Publish 30 Essays (Complete Book Volume)", completed: false },
+    ],
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+const INITIAL_TIMEBLOCKS_WORK: TimeBlock[] = [
   {
     id: "tb-1",
     endeavorId: "end-2",
@@ -284,97 +459,232 @@ const INITIAL_TIMEBLOCKS: TimeBlock[] = [
     energyLevel: "deep",
     notes: "Implement streaming AI co-pilot responses and token counters.",
   },
-  {
-    id: "tb-3",
-    endeavorId: "end-5",
-    title: "Zone 2 5km Aerobic Run",
-    startTime: "17:00",
-    endTime: "17:45",
-    date: new Date().toISOString().split("T")[0],
-    completed: false,
-    energyLevel: "medium",
-    notes: "Maintain heart rate around 140 bpm.",
-  },
-  {
-    id: "tb-4",
-    endeavorId: "end-1",
-    title: "Evening Book Chapter & Notes Reflection",
-    startTime: "21:30",
-    endTime: "22:15",
-    date: new Date().toISOString().split("T")[0],
-    completed: false,
-    energyLevel: "light",
-    notes: "Finish Chapter 8 on Atomic Systems.",
-  },
 ];
 
 export const storage = {
-  getEndeavors(): Endeavor[] {
+  // --- MULTI-PROFILE ACCOUNTS ---
+  getProfiles(): UserProfileAccount[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.ENDEAVORS);
+      const data = localStorage.getItem(STORAGE_KEYS.PROFILES_LIST);
       if (!data) {
-        localStorage.setItem(STORAGE_KEYS.ENDEAVORS, JSON.stringify(INITIAL_ENDEAVORS));
-        return INITIAL_ENDEAVORS;
+        localStorage.setItem(STORAGE_KEYS.PROFILES_LIST, JSON.stringify(INITIAL_PROFILES));
+        return INITIAL_PROFILES;
       }
       return JSON.parse(data);
     } catch {
-      return INITIAL_ENDEAVORS;
+      return INITIAL_PROFILES;
     }
   },
 
-  saveEndeavors(endeavors: Endeavor[]): void {
+  saveProfiles(profiles: UserProfileAccount[]): void {
     try {
-      localStorage.setItem(STORAGE_KEYS.ENDEAVORS, JSON.stringify(endeavors));
+      localStorage.setItem(STORAGE_KEYS.PROFILES_LIST, JSON.stringify(profiles));
     } catch (e) {
-      console.error("Failed to save endeavors to storage", e);
+      console.error("Failed to save profiles list", e);
     }
   },
 
-  getLogs(): ProgressLog[] {
+  getActiveProfileId(): string {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.LOGS);
+      const activeId = localStorage.getItem(STORAGE_KEYS.ACTIVE_PROFILE_ID);
+      if (activeId) return activeId;
+      const profiles = this.getProfiles();
+      const fallbackId = profiles[0]?.id || "prof_work";
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, fallbackId);
+      return fallbackId;
+    } catch {
+      return "prof_work";
+    }
+  },
+
+  setActiveProfileId(id: string): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, id);
+    } catch (e) {
+      console.error("Failed to set active profile id", e);
+    }
+  },
+
+  getActiveProfile(): UserProfileAccount {
+    const activeId = this.getActiveProfileId();
+    const profiles = this.getProfiles();
+    const found = profiles.find((p) => p.id === activeId);
+    if (found) return found;
+    return profiles[0] || DEFAULT_PROFILE;
+  },
+
+  createProfile(profileData: Partial<UserProfileAccount>): UserProfileAccount {
+    const profiles = this.getProfiles();
+    const newId = "prof_" + Date.now();
+    const newProfile: UserProfileAccount = {
+      id: newId,
+      name: profileData.name || "New Space",
+      role: profileData.role || "Explorer",
+      avatarIcon: profileData.avatarIcon || "⚡",
+      avatarColor: profileData.avatarColor || "#10b981",
+      northStarMotto: profileData.northStarMotto || "Design your days, shape your future.",
+      targetFocusHoursPerDay: profileData.targetFocusHoursPerDay || 4,
+      wakeTime: profileData.wakeTime || "07:00",
+      sleepTime: profileData.sleepTime || "23:00",
+      selectedLifeSpheres: profileData.selectedLifeSpheres || ["career", "health", "learning"],
+      isSetupCompleted: true,
+      themeConfig: {
+        ...DEFAULT_THEME_CONFIG,
+        accent: (profileData.themeConfig?.accent as any) || "emerald",
+        ambientBackground: profileData.themeConfig?.ambientBackground || "aurora",
+        avatarIcon: profileData.avatarIcon || "⚡",
+        avatarColor: profileData.avatarColor || "#10b981",
+        customAppTitle: (profileData.name || "MY SPACE").toUpperCase() + " OS",
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [...profiles, newProfile];
+    this.saveProfiles(updated);
+    this.setActiveProfileId(newId);
+
+    // Initialize clean starter endeavors for new profile
+    this.saveEndeavors(
+      [
+        {
+          id: `end-init-${newId}-1`,
+          title: `Build 14-Day Consistency in ${newProfile.name}`,
+          description: "Establish momentum by checking in daily on your primary aspiration.",
+          category: "personal",
+          archetype: "habit",
+          targetValue: 14,
+          startValue: 0,
+          currentValue: 1,
+          unit: "days",
+          frequency: "daily",
+          status: "active",
+          priority: "high",
+          streakCount: 1,
+          bestStreak: 1,
+          color: newProfile.avatarColor,
+          icon: "Sparkles",
+          tags: ["momentum", "growth"],
+          history: { [new Date().toISOString().split("T")[0]]: 1 },
+          milestones: [
+            { id: "m1", title: "Day 1 Launch", completed: true, completedAt: new Date().toISOString() },
+            { id: "m2", title: "Day 7 Foundation", completed: false },
+            { id: "m3", title: "Day 14 Mastery", completed: false },
+          ],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      newId
+    );
+
+    return newProfile;
+  },
+
+  updateProfile(updatedProfile: UserProfileAccount): void {
+    const profiles = this.getProfiles();
+    const nextProfiles = profiles.map((p) => (p.id === updatedProfile.id ? updatedProfile : p));
+    this.saveProfiles(nextProfiles);
+  },
+
+  deleteProfile(profileId: string): boolean {
+    const profiles = this.getProfiles();
+    if (profiles.length <= 1) return false; // Prevent deleting last remaining profile
+
+    const filtered = profiles.filter((p) => p.id !== profileId);
+    this.saveProfiles(filtered);
+
+    // If active profile was deleted, switch to the first available
+    if (this.getActiveProfileId() === profileId) {
+      this.setActiveProfileId(filtered[0].id);
+    }
+    return true;
+  },
+
+  // --- SCOPED GETTERS & SETTERS (Scoped per profileId) ---
+  getEndeavors(profileId?: string): Endeavor[] {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_endeavors_v3`;
+    try {
+      const data = localStorage.getItem(key);
+      if (!data) {
+        let initial = INITIAL_ENDEAVORS_WORK;
+        if (pId === "prof_fitness") initial = INITIAL_ENDEAVORS_FITNESS;
+        if (pId === "prof_creative") initial = INITIAL_ENDEAVORS_CREATIVE;
+        localStorage.setItem(key, JSON.stringify(initial));
+        return initial;
+      }
+      return JSON.parse(data);
+    } catch {
+      return INITIAL_ENDEAVORS_WORK;
+    }
+  },
+
+  saveEndeavors(endeavors: Endeavor[], profileId?: string): void {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_endeavors_v3`;
+    try {
+      localStorage.setItem(key, JSON.stringify(endeavors));
+    } catch (e) {
+      console.error("Failed to save endeavors", e);
+    }
+  },
+
+  getLogs(profileId?: string): ProgressLog[] {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_logs_v3`;
+    try {
+      const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
     }
   },
 
-  saveLogs(logs: ProgressLog[]): void {
+  saveLogs(logs: ProgressLog[], profileId?: string): void {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_logs_v3`;
     try {
-      localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(logs));
+      localStorage.setItem(key, JSON.stringify(logs));
     } catch (e) {
       console.error("Failed to save logs", e);
     }
   },
 
-  getTimeBlocks(): TimeBlock[] {
+  getTimeBlocks(profileId?: string): TimeBlock[] {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_timeblocks_v3`;
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.TIMEBLOCKS);
+      const data = localStorage.getItem(key);
       if (!data) {
-        localStorage.setItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify(INITIAL_TIMEBLOCKS));
-        return INITIAL_TIMEBLOCKS;
+        const initial = pId === "prof_work" ? INITIAL_TIMEBLOCKS_WORK : [];
+        localStorage.setItem(key, JSON.stringify(initial));
+        return initial;
       }
       return JSON.parse(data);
     } catch {
-      return INITIAL_TIMEBLOCKS;
+      return [];
     }
   },
 
-  saveTimeBlocks(blocks: TimeBlock[]): void {
+  saveTimeBlocks(blocks: TimeBlock[], profileId?: string): void {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_timeblocks_v3`;
     try {
-      localStorage.setItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify(blocks));
+      localStorage.setItem(key, JSON.stringify(blocks));
     } catch (e) {
       console.error("Failed to save time blocks", e);
     }
   },
 
-  getStats(): UserStats {
+  getStats(profileId?: string): UserStats {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_stats_v3`;
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.STATS);
+      const data = localStorage.getItem(key);
       if (!data) {
         const initial: UserStats = {
-          level: 4,
-          xp: 840,
+          level: pId === "prof_fitness" ? 5 : pId === "prof_creative" ? 3 : 4,
+          xp: pId === "prof_fitness" ? 1120 : pId === "prof_creative" ? 640 : 840,
           points: 1250,
           totalCheckIns: 48,
           totalMilestonesCompleted: 7,
@@ -382,7 +692,7 @@ export const storage = {
           completedEndeavors: 1,
           badges: INITIAL_BADGES,
         };
-        localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(initial));
+        localStorage.setItem(key, JSON.stringify(initial));
         return initial;
       }
       return JSON.parse(data);
@@ -400,73 +710,66 @@ export const storage = {
     }
   },
 
-  saveStats(stats: UserStats): void {
+  saveStats(stats: UserStats, profileId?: string): void {
+    const pId = profileId || this.getActiveProfileId();
+    const key = `lifeorbit_${pId}_stats_v3`;
     try {
-      localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats));
+      localStorage.setItem(key, JSON.stringify(stats));
     } catch (e) {
       console.error("Failed to save stats", e);
     }
   },
 
-  getProfile(): UserProfile {
-    try {
-      const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      if (!data) {
-        localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(DEFAULT_PROFILE));
-        return DEFAULT_PROFILE;
-      }
-      const parsed = JSON.parse(data);
-      return {
-        ...DEFAULT_PROFILE,
-        ...parsed,
-        themeConfig: {
-          ...DEFAULT_PROFILE.themeConfig,
-          ...(parsed.themeConfig || {}),
-        },
-      };
-    } catch {
-      return DEFAULT_PROFILE;
-    }
+  getProfile(profileId?: string): UserProfile {
+    const profiles = this.getProfiles();
+    const pId = profileId || this.getActiveProfileId();
+    const found = profiles.find((p) => p.id === pId) || profiles[0] || DEFAULT_PROFILE;
+    return found;
   },
 
   saveProfile(profile: UserProfile): void {
-    try {
-      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
-    } catch (e) {
-      console.error("Failed to save profile", e);
-    }
+    this.updateProfile(profile);
   },
 
   exportDatabaseJSON(): string {
-    const backup = {
-      version: "2026.1",
+    const profiles = this.getProfiles();
+    const activeId = this.getActiveProfileId();
+    const allData: Record<string, any> = {
+      version: "2026.2",
       exportedAt: new Date().toISOString(),
-      endeavors: this.getEndeavors(),
-      logs: this.getLogs(),
-      timeBlocks: this.getTimeBlocks(),
-      stats: this.getStats(),
-      profile: this.getProfile(),
+      profiles,
+      activeProfileId: activeId,
+      profileData: {},
     };
-    return JSON.stringify(backup, null, 2);
+
+    profiles.forEach((p) => {
+      allData.profileData[p.id] = {
+        endeavors: this.getEndeavors(p.id),
+        logs: this.getLogs(p.id),
+        timeBlocks: this.getTimeBlocks(p.id),
+        stats: this.getStats(p.id),
+      };
+    });
+
+    return JSON.stringify(allData, null, 2);
   },
 
   importDatabaseJSON(jsonStr: string): boolean {
     try {
       const parsed = JSON.parse(jsonStr);
-      if (Array.isArray(parsed.endeavors)) {
-        this.saveEndeavors(parsed.endeavors);
+      if (Array.isArray(parsed.profiles)) {
+        this.saveProfiles(parsed.profiles);
       }
-      if (Array.isArray(parsed.logs)) {
-        this.saveLogs(parsed.logs);
+      if (parsed.activeProfileId) {
+        this.setActiveProfileId(parsed.activeProfileId);
       }
-      if (Array.isArray(parsed.timeBlocks)) {
-        this.saveTimeBlocks(parsed.timeBlocks);
-      }
-      if (parsed.stats) {
-        this.saveStats(parsed.stats);
-      }
-      if (parsed.profile) {
-        this.saveProfile(parsed.profile);
+      if (parsed.profileData) {
+        Object.entries(parsed.profileData).forEach(([pId, data]: [string, any]) => {
+          if (data.endeavors) this.saveEndeavors(data.endeavors, pId);
+          if (data.logs) this.saveLogs(data.logs, pId);
+          if (data.timeBlocks) this.saveTimeBlocks(data.timeBlocks, pId);
+          if (data.stats) this.saveStats(data.stats, pId);
+        });
       }
       return true;
     } catch (e) {
@@ -476,18 +779,15 @@ export const storage = {
   },
 
   resetDefaults(): void {
-    localStorage.setItem(STORAGE_KEYS.ENDEAVORS, JSON.stringify(INITIAL_ENDEAVORS));
-    localStorage.setItem(STORAGE_KEYS.TIMEBLOCKS, JSON.stringify(INITIAL_TIMEBLOCKS));
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(DEFAULT_PROFILE));
-    localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify({
-      level: 4,
-      xp: 840,
-      points: 1250,
-      totalCheckIns: 48,
-      totalMilestonesCompleted: 7,
-      activeStreaks: 5,
-      completedEndeavors: 1,
-      badges: INITIAL_BADGES,
-    }));
+    localStorage.setItem(STORAGE_KEYS.PROFILES_LIST, JSON.stringify(INITIAL_PROFILES));
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, "prof_work");
+    INITIAL_PROFILES.forEach((p) => {
+      const pId = p.id;
+      let initial = INITIAL_ENDEAVORS_WORK;
+      if (pId === "prof_fitness") initial = INITIAL_ENDEAVORS_FITNESS;
+      if (pId === "prof_creative") initial = INITIAL_ENDEAVORS_CREATIVE;
+      this.saveEndeavors(initial, pId);
+      this.saveTimeBlocks(pId === "prof_work" ? INITIAL_TIMEBLOCKS_WORK : [], pId);
+    });
   },
 };

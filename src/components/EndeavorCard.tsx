@@ -29,6 +29,7 @@ interface EndeavorCardProps {
   onStartFocus: (endeavor: Endeavor) => void;
   onEdit: (endeavor: Endeavor) => void;
   onDelete: (endeavorId: string) => void;
+  onOpenDetail?: (endeavor: Endeavor) => void;
 }
 
 export const EndeavorCard: React.FC<EndeavorCardProps> = ({
@@ -39,6 +40,7 @@ export const EndeavorCard: React.FC<EndeavorCardProps> = ({
   onStartFocus,
   onEdit,
   onDelete,
+  onOpenDetail,
 }) => {
   const [showMilestones, setShowMilestones] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -132,9 +134,9 @@ export const EndeavorCard: React.FC<EndeavorCardProps> = ({
                 </span>
               </div>
               <h3
-                onClick={() => onEdit(endeavor)}
+                onClick={() => (onOpenDetail ? onOpenDetail(endeavor) : onEdit(endeavor))}
                 className="font-semibold text-white text-base sm:text-lg mt-1 tracking-tight leading-snug cursor-pointer hover:text-emerald-400 transition-colors"
-                title="Click to edit endeavor"
+                title="Click to view strategy & milestones"
               >
                 {endeavor.title}
               </h3>
@@ -152,7 +154,19 @@ export const EndeavorCard: React.FC<EndeavorCardProps> = ({
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 mt-1 w-44 bg-[#1a1a1a] rounded-xl shadow-2xl border border-white/10 py-1.5 z-20 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 mt-1 w-48 bg-[#1a1a1a] rounded-xl shadow-2xl border border-white/10 py-1.5 z-20 animate-in fade-in zoom-in-95 duration-150">
+                {onOpenDetail && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onOpenDetail(endeavor);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 hover:text-white cursor-pointer flex items-center space-x-2 transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Strategy & Milestones</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setShowMenu(false);

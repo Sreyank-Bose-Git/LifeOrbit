@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -8,12 +8,22 @@ import {
   CheckCircle2,
   Target,
   Zap,
-  ShieldCheck,
-  Rocket,
-  Timer,
   Trophy,
+  Activity,
+  Layers,
 } from "lucide-react";
 import { Endeavor, UserStats, ProgressLog } from "../types";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+  Cell,
+} from "recharts";
 
 interface InsightsViewProps {
   endeavors: Endeavor[];
@@ -26,7 +36,52 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   stats,
   logs,
 }) => {
-  // Generate past 28 days for the habit heatmap matrix
+  const [selectedRange, setSelectedRange] = useState<"14d" | "28d">("14d");
+
+  // 14-day velocity data for Recharts Area Chart
+  const velocityData = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const dStr = d.toISOString().split("T")[0];
+    const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+
+    let totalVolume = 0;
+    endeavors.forEach((e) => {
+      if (e.history && e.history[dStr]) {
+        totalVolume += e.history[dStr];
+      }
+    });
+
+    return {
+      date: dayName + " " + d.getDate(),
+      rawDate: dStr,
+      volume: totalVolume,
+      count: endeavors.filter((e) => e.history?.[dStr]).length,
+    };
+  });
+
+  // Category Distribution for Bar Chart
+  const categoryCounts: Record<string, number> = {};
+  endeavors.forEach((e) => {
+    categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+  });
+
+  const categoryChartData = Object.entries(categoryCounts).map(([cat, count]) => {
+    let color = "#10b981"; // emerald
+    if (cat === "career") color = "#f59e0b"; // amber
+    if (cat === "health") color = "#ef4444"; // red
+    if (cat === "learning") color = "#6366f1"; // indigo
+    if (cat === "finance") color = "#10b981"; // emerald
+    if (cat === "mindfulness") color = "#14b8a6"; // teal
+
+    return {
+      category: cat.charAt(0).toUpperCase() + cat.slice(1),
+      count,
+      color,
+    };
+  });
+
+  // 28-day consistency heatmap
   const past28Days = Array.from({ length: 28 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (27 - i));
@@ -34,10 +89,9 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
     const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
     const dayNumber = d.getDate();
 
-    // Total activity count across all endeavors on this date
     let totalCount = 0;
     endeavors.forEach((e) => {
-      if (e.history[dStr]) totalCount += 1;
+      if (e.history?.[dStr]) totalCount += 1;
     });
 
     return {
@@ -127,6 +181,121 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
         </div>
       </div>
 
+      {/* Interactive Charts Section: 14-Day Velocity & Category Balance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Chart 1: 14-Day Velocity Area Graph */}
+        <div className="bg-[#0D0D0D] rounded-3xl p-6 border border-white/5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-white text-base flex items-center space-x-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <span>14-Day Output Velocity</span>
+              </h3>
+              <p className="text-xs text-slate-400">Daily logged increments and check-ins</p>
+            </div>
+            <span className="text-[11px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              Active Flow
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={velocityData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorVelocity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="date"
+                  stroke="#525252"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#525252"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#141414",
+                    borderColor: "rgba(255,255,255,0.1)",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    color: "#fff",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  name="Goals Logged"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#colorVelocity)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 2: Life Spheres Distribution Bar Chart */}
+        <div className="bg-[#0D0D0D] rounded-3xl p-6 border border-white/5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-white text-base flex items-center space-x-2">
+                <Layers className="w-4 h-4 text-purple-400" />
+                <span>Life Spheres Distribution</span>
+              </h3>
+              <p className="text-xs text-slate-400">Goals mapped across life domains</p>
+            </div>
+            <span className="text-[11px] text-purple-400 font-mono bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+              {categoryChartData.length} Spheres
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <XAxis
+                  dataKey="category"
+                  stroke="#525252"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#525252"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#141414",
+                    borderColor: "rgba(255,255,255,0.1)",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    color: "#fff",
+                  }}
+                />
+                <Bar dataKey="count" name="Endeavors" radius={[6, 6, 0, 0]}>
+                  {categoryChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
       {/* 28-Day Consistency Heatmap Grid */}
       <div className="bg-[#0D0D0D] rounded-3xl p-6 border border-white/5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
@@ -134,7 +303,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
             <h3 className="font-bold text-white text-base">4-Week Activity Heatmap</h3>
             <p className="text-xs text-slate-400">Aggregate daily execution intensity across all your goals</p>
           </div>
-          <div className="flex items-center space-x-1.5 text-[10px] text-slate-400">
+          <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 select-none">
             <span>Less</span>
             <div className="w-3 h-3 rounded bg-white/5 border border-white/5" />
             <div className="w-3 h-3 rounded bg-emerald-950 border border-emerald-800" />
@@ -167,12 +336,12 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
         </div>
       </div>
 
-      {/* Archetype Balance & Completion Forecast */}
+      {/* Archetype Balance & Badges */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Archetype Breakdown */}
         <div className="bg-[#0D0D0D] rounded-3xl p-6 border border-white/5 shadow-xs space-y-4">
           <h3 className="font-bold text-white text-base">Archetype Balance</h3>
-          <p className="text-xs text-slate-400">How your endeavors are structured for optimal life balance</p>
+          <p className="text-xs text-slate-400">How your endeavors are structured for optimal balance</p>
 
           <div className="space-y-3 pt-2">
             <div>
