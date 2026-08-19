@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #0A0A0A;
+    color: #e2e8f0;
+    min-height: 100vh;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  button,
+  [role="button"],
+  select,
+  summary,
+  input[type="range"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"],
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  input[type="text"],
+  input[type="time"],
+  input[type="number"],
+  textarea {
+    cursor: text;
+  }
+}
+
+/* Interactive custom slider thumb */
+input[type="range"]::-webkit-slider-thumb {
+  cursor: grab;
+}
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+/* Custom sleek dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
