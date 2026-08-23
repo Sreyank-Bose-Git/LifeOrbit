@@ -795,6 +795,19 @@ export const storage = {
     }
   },
 
+  clearAllData(): void {
+    try {
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (key.startsWith("lifeorbit_")) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to clear local data", e);
+    }
+  },
+
   resetDefaults(): void {
     localStorage.setItem(STORAGE_KEYS.PROFILES_LIST, JSON.stringify(INITIAL_PROFILES));
     localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, "prof_work");

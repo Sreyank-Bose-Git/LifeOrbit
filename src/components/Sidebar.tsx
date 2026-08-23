@@ -42,7 +42,7 @@ interface SidebarProps {
   onOpenProfileHub?: () => void;
   onReplayIntroLogo?: () => void;
   currentUser?: FirebaseUser | null;
-  onSignOut?: () => void;
+  onOpenAccountSettings?: () => void;
   onSignIn?: () => void;
 }
 
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenProfileHub,
   onReplayIntroLogo,
   currentUser,
-  onSignOut,
+  onOpenAccountSettings,
   onSignIn,
 }) => {
   const currentTheme = THEME_ACCENTS[profile.themeConfig?.accent] || THEME_ACCENTS.emerald;
@@ -531,10 +531,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="mt-2 text-center">
               {currentUser ? (
                 <button
-                  onClick={() => onSignOut && onSignOut()}
-                  className="text-[10px] text-slate-500 hover:text-rose-400 font-mono transition-colors"
+                  onClick={() => onOpenAccountSettings && onOpenAccountSettings()}
+                  className="text-[10px] text-slate-500 hover:text-white font-mono transition-colors"
                 >
-                  Disconnect from {currentUser.email}
+                  {currentUser.email}
                 </button>
               ) : (
                 <button

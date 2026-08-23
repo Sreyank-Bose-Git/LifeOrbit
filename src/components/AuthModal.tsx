@@ -22,6 +22,7 @@ import {
   updateFirebaseProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  getAdditionalUserInfo,
   FirebaseUser
 } from "../lib/firebase";
 
@@ -29,7 +30,7 @@ interface AuthModalProps {
   isOpen: boolean;
   initialMode: "login" | "signup";
   onClose: () => void;
-  onSuccess: (user: FirebaseUser) => void;
+  onSuccess: (user: FirebaseUser, isNewUser: boolean) => void;
 }
 
 export function AuthModal({
@@ -91,7 +92,7 @@ export function AuthModal({
 
         setSuccessMsg("Account created successfully! A verification email has been dispatched.");
         setTimeout(() => {
-          onSuccess(user);
+          onSuccess(user, true);
           onClose();
         }, 1200);
       } else if (mode === "login") {
@@ -99,7 +100,7 @@ export function AuthModal({
         const user = userCredential.user;
         setSuccessMsg("Signed in successfully. Syncing your orbit trajectory...");
         setTimeout(() => {
-          onSuccess(user);
+          onSuccess(user, false);
           onClose();
         }, 800);
       } else if (mode === "forgot") {
@@ -142,9 +143,10 @@ export function AuthModal({
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
+      const isNewUser = getAdditionalUserInfo(userCredential)?.isNewUser ?? false;
       setSuccessMsg("Signed in with Google successfully.");
       setTimeout(() => {
-        onSuccess(userCredential.user);
+        onSuccess(userCredential.user, isNewUser);
         onClose();
       }, 800);
     } catch (err: any) {

@@ -32,6 +32,7 @@ import { storage } from "./lib/storage";
 import { THEME_ACCENTS } from "./lib/theme";
 import { PublicLandingPage } from "./components/PublicLandingPage";
 import { AuthModal } from "./components/AuthModal";
+import { AccountSettingsModal } from "./components/AccountSettingsModal";
 import { onAuthStateChanged, FirebaseUser, signOut, auth } from "./lib/firebase";
 import { syncCloudToLocal, syncLocalToCloud } from "./lib/cloudSync";
 import {
@@ -168,6 +169,7 @@ export default function App() {
   // Modal States
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
   const [isProfileHubOpen, setIsProfileHubOpen] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [selectedEndeavorForLog, setSelectedEndeavorForLog] = useState<Endeavor | null>(null);
@@ -702,9 +704,12 @@ export default function App() {
           isOpen={authModalConfig.isOpen}
           initialMode={authModalConfig.mode}
           onClose={() => setAuthModalConfig((prev) => ({ ...prev, isOpen: false }))}
-          onSuccess={(user) => {
+          onSuccess={(user, isNewUser) => {
             setCurrentUser(user);
             setIsGuest(false);
+            if (isNewUser) {
+              setIsSetupWizardOpen(true);
+            }
           }}
         />
       </>
@@ -743,7 +748,7 @@ export default function App() {
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenProfileHub={() => setIsProfileHubOpen(true)}
         currentUser={currentUser}
-        onSignOut={() => signOut(auth)}
+        onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
         onSignIn={() => {
           setIsGuest(false);
           setAuthModalConfig({ isOpen: true, mode: "login" });
@@ -1791,6 +1796,13 @@ export default function App() {
       />
 
       {/* MODALS */}
+      <AccountSettingsModal
+        isOpen={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        currentUser={currentUser}
+        onDataCleared={() => loadData()}
+      />
+      
       <ProfileHubModal
         isOpen={isProfileHubOpen}
         onClose={() => setIsProfileHubOpen(false)}

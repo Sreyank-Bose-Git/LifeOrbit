@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { storage } from "./storage";
 import { Endeavor, ProgressLog, TimeBlock, UserStats, UserProfileAccount } from "../types";
@@ -105,5 +105,23 @@ export async function syncCloudToLocal(uid: string): Promise<CloudUserData | nul
   } catch (err) {
     console.error("Failed to sync cloud to local:", err);
     return null;
+  }
+}
+
+/**
+ * Delete all root documents for a user from Firestore to ensure clean account deletion.
+ * Note: Real production apps might need Cloud Functions to delete subcollections, 
+ * but this is sufficient for client-side root deletion.
+ */
+export async function deleteUserCloudData(uid: string): Promise<void> {
+  if (!uid) return;
+  try {
+    const userDocRef = doc(db, "users", uid);
+    const workspaceRef = doc(db, "user_workspaces", uid);
+    await deleteDoc(userDocRef);
+    await deleteDoc(workspaceRef);
+  } catch (err) {
+    console.error("Failed to delete user cloud data:", err);
+    throw err;
   }
 }
