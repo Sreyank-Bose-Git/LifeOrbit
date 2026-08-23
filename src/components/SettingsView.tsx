@@ -33,8 +33,9 @@ import {
   WorkspaceDensity,
   Category,
   BackgroundAnimationMode,
+  EyeComfortPreset,
 } from "../types";
-import { THEME_ACCENTS, DENSITY_CONFIG } from "../lib/theme";
+import { THEME_ACCENTS, DENSITY_CONFIG, EYE_COMFORT_PRESETS } from "../lib/theme";
 import { LifeSphereOrb } from "./LifeSphereOrb";
 import { focusAudio } from "../lib/audio";
 
@@ -444,6 +445,233 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={(e) => setFormData({ ...formData, sleepTime: e.target.value })}
                   className="w-full px-2.5 py-1.5 bg-[#06070B] border border-white/15 rounded-xl text-xs text-white focus:outline-none"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Eye Comfort & Optic Wellness Studio */}
+          <div className="bg-[#06070B]/90 backdrop-blur-3xl rounded-[28px] p-6 border border-amber-500/20 shadow-[0_0_40px_rgba(245,158,11,0.1)] space-y-4 font-mono">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center space-x-2.5">
+                <Eye className="w-4 h-4 text-amber-400" />
+                <h3 className="font-bold text-white text-sm uppercase">Eye Comfort & Optic Health</h3>
+              </div>
+              <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                CIRCADIAN READY
+              </span>
+            </div>
+
+            {/* Presets Grid */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Spectra Spectrum & Blue-Light Shield
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {Object.values(EYE_COMFORT_PRESETS).map((preset) => {
+                  const isSelected =
+                    (formData.themeConfig.eyeComfortPreset || "off") === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          themeConfig: {
+                            ...formData.themeConfig,
+                            eyeComfortPreset: preset.id,
+                          },
+                        })
+                      }
+                      className={`p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? "bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-400/50"
+                          : "bg-white/[0.03] border-white/10 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-base">{preset.icon}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                      </div>
+                      <div>
+                        <span className="text-xs block font-bold text-white mb-0.5">
+                          {preset.label}
+                        </span>
+                        <span className="text-[9px] text-slate-500 font-sans block truncate leading-tight">
+                          {preset.kelvin}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Warmth & Brightness Intensity Sliders */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10">
+              <div>
+                <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                  <span className="font-bold uppercase">Warmth Spectrum</span>
+                  <span className="text-amber-400 font-bold">
+                    {formData.themeConfig.eyeComfortWarmth ?? 45}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={formData.themeConfig.eyeComfortWarmth ?? 45}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      themeConfig: {
+                        ...formData.themeConfig,
+                        eyeComfortWarmth: parseInt(e.target.value, 10),
+                      },
+                    })
+                  }
+                  className="w-full accent-amber-400 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                  <span className="font-bold uppercase">Brightness Limiter</span>
+                  <span className="text-amber-400 font-bold">
+                    {formData.themeConfig.eyeComfortBrightness ?? 92}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="70"
+                  max="100"
+                  value={formData.themeConfig.eyeComfortBrightness ?? 92}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      themeConfig: {
+                        ...formData.themeConfig,
+                        eyeComfortBrightness: parseInt(e.target.value, 10),
+                      },
+                    })
+                  }
+                  className="w-full accent-amber-400 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Eye Wellness Toggles */}
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              {/* Auto Night Comfort Schedule */}
+              <div
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    themeConfig: {
+                      ...formData.themeConfig,
+                      autoNightComfort: !formData.themeConfig.autoNightComfort,
+                    },
+                  })
+                }
+                className="p-3 bg-white/[0.03] rounded-2xl border border-white/10 flex items-center justify-between cursor-pointer hover:border-white/20 transition"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <Moon className="w-4 h-4 text-indigo-400" />
+                  <div>
+                    <span className="text-xs font-semibold text-white block">
+                      Circadian Sunset Auto-Warmth
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-sans block">
+                      Auto-activates warm amber tones from 8:00 PM to 7:00 AM
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className={`w-8 h-4.5 rounded-full transition-colors relative flex items-center p-0.5 ${
+                    formData.themeConfig.autoNightComfort ? "bg-amber-500" : "bg-white/10"
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                      formData.themeConfig.autoNightComfort ? "translate-x-3.5" : "translate-x-0"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* 20-20-20 Optic Rule Breaks */}
+              <div
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    themeConfig: {
+                      ...formData.themeConfig,
+                      eyeBreakReminder202020: !formData.themeConfig.eyeBreakReminder202020,
+                    },
+                  })
+                }
+                className="p-3 bg-white/[0.03] rounded-2xl border border-white/10 flex items-center justify-between cursor-pointer hover:border-white/20 transition"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <div>
+                    <span className="text-xs font-semibold text-white block">
+                      20-20-20 Optic Relaxation Reminders
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-sans block">
+                      Gentle 20-second optic rest chime every 20 minutes of active work
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className={`w-8 h-4.5 rounded-full transition-colors relative flex items-center p-0.5 ${
+                    formData.themeConfig.eyeBreakReminder202020 ? "bg-emerald-500" : "bg-white/10"
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                      formData.themeConfig.eyeBreakReminder202020 ? "translate-x-3.5" : "translate-x-0"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Reduced Motion & Soft Glare */}
+              <div
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    themeConfig: {
+                      ...formData.themeConfig,
+                      reducedMotion: !formData.themeConfig.reducedMotion,
+                      softGlow: !formData.themeConfig.softGlow,
+                    },
+                  })
+                }
+                className="p-3 bg-white/[0.03] rounded-2xl border border-white/10 flex items-center justify-between cursor-pointer hover:border-white/20 transition"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <span className="text-xs font-semibold text-white block">
+                      Soft Glare & Calmed Motion
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-sans block">
+                      Attenuates intense neon halos and decelerates background particles
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className={`w-8 h-4.5 rounded-full transition-colors relative flex items-center p-0.5 ${
+                    formData.themeConfig.reducedMotion ? currentTheme.buttonBg : "bg-white/10"
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                      formData.themeConfig.reducedMotion ? "translate-x-3.5" : "translate-x-0"
+                    }`}
+                  />
+                </div>
               </div>
             </div>
           </div>

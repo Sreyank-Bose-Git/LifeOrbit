@@ -29,12 +29,17 @@ import {
   Bot,
   BrainCircuit,
   CornerDownLeft,
+  Eye,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Endeavor, ViewTab, Category } from "../types";
+import { Endeavor, ViewTab, Category, UIThemeConfig, EyeComfortPreset } from "../types";
 import { getEndeavorIcon, getCategoryBadge, getArchetypeInfo, StylizedIconOrb } from "../lib/icons";
 import { focusAudio, AmbientSoundType } from "../lib/audio";
 import { SPHERE_DEFINITIONS } from "./LifeSphereOrb";
+import { EYE_COMFORT_PRESETS } from "../lib/theme";
+import { triggerEyeBreakModal } from "./EyeComfortManager";
 import confetti from "canvas-confetti";
 
 export type SearchScope =
@@ -61,6 +66,9 @@ interface CommandPaletteModalProps {
   onOpenBackup?: () => void;
   onOpenDeviceSync?: () => void;
   onToggleOrbitQueue?: () => void;
+  themeConfig?: UIThemeConfig;
+  onUpdateThemeConfig?: (cfg: Partial<UIThemeConfig>) => void;
+  onTriggerEyeBreakDemo?: () => void;
 }
 
 const RECENT_SEARCHES_KEY = "lifeorbit_search_wizard_history";
@@ -79,6 +87,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenBackup,
   onOpenDeviceSync,
   onToggleOrbitQueue,
+  themeConfig,
+  onUpdateThemeConfig,
+  onTriggerEyeBreakDemo,
 }) => {
   const [rawQuery, setRawQuery] = useState("");
   const [activeScope, setActiveScope] = useState<SearchScope>("all");
@@ -250,8 +261,104 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           if (onToggleOrbitQueue) onToggleOrbitQueue();
         },
       },
+      {
+        id: "act-eye-warm",
+        title: "Eye Comfort: Amber Warmth Mode (3400K)",
+        category: "Eye Comfort & Optics",
+        badge: "WARMTH",
+        icon: Eye,
+        color: "#f59e0b",
+        handler: () => {
+          onClose();
+          if (onUpdateThemeConfig) {
+            onUpdateThemeConfig({ eyeComfortPreset: "warm" });
+            focusAudio.playClick();
+          }
+        },
+      },
+      {
+        id: "act-eye-candle",
+        title: "Eye Comfort: Candlelight Night Shield (2400K)",
+        category: "Eye Comfort & Optics",
+        badge: "NIGHT",
+        icon: Moon,
+        color: "#ea580c",
+        handler: () => {
+          onClose();
+          if (onUpdateThemeConfig) {
+            onUpdateThemeConfig({ eyeComfortPreset: "candlelight" });
+            focusAudio.playClick();
+          }
+        },
+      },
+      {
+        id: "act-eye-paper",
+        title: "Eye Comfort: E-Ink / Slate Monochromatic Low-Strain",
+        category: "Eye Comfort & Optics",
+        badge: "E-INK",
+        icon: Eye,
+        color: "#d97706",
+        handler: () => {
+          onClose();
+          if (onUpdateThemeConfig) {
+            onUpdateThemeConfig({ eyeComfortPreset: "paper" });
+            focusAudio.playClick();
+          }
+        },
+      },
+      {
+        id: "act-eye-dim",
+        title: "Eye Comfort: Ultra-Low Lumens Midnight Dimmer",
+        category: "Eye Comfort & Optics",
+        badge: "DIMMER",
+        icon: Moon,
+        color: "#94a3b8",
+        handler: () => {
+          onClose();
+          if (onUpdateThemeConfig) {
+            onUpdateThemeConfig({ eyeComfortPreset: "dim" });
+            focusAudio.playClick();
+          }
+        },
+      },
+      {
+        id: "act-eye-off",
+        title: "Eye Comfort: Crisp Precision 6500K (Disable Filter)",
+        category: "Eye Comfort & Optics",
+        badge: "STANDARD",
+        icon: Sun,
+        color: "#38bdf8",
+        handler: () => {
+          onClose();
+          if (onUpdateThemeConfig) {
+            onUpdateThemeConfig({ eyeComfortPreset: "off" });
+            focusAudio.playClick();
+          }
+        },
+      },
+      {
+        id: "act-eye-break",
+        title: "Eye Comfort: Start 20-20-20 Optic Relaxation Rest",
+        category: "Eye Comfort & Optics",
+        badge: "20-20-20",
+        icon: Eye,
+        color: "#10b981",
+        handler: () => {
+          onClose();
+          triggerEyeBreakModal();
+        },
+      },
     ];
-  }, [onClose, onOpenCreate, onOpenSetupWizard, onOpenProfileHub, onOpenBackup, onOpenDeviceSync, onToggleOrbitQueue]);
+  }, [
+    onClose,
+    onOpenCreate,
+    onOpenSetupWizard,
+    onOpenProfileHub,
+    onOpenBackup,
+    onOpenDeviceSync,
+    onToggleOrbitQueue,
+    onUpdateThemeConfig,
+  ]);
 
   // Build Navigation Items
   const navViews = useMemo(() => {

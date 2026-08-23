@@ -101,9 +101,9 @@ export const EndeavorCard: React.FC<EndeavorCardProps> = ({
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ duration: 0.2 }}
-      className="h-full bg-[#06070B]/85 hover:bg-[#090B12]/95 backdrop-blur-2xl rounded-[28px] border border-white/10 hover:border-white/20 shadow-[0_0_35px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.08)] transition-all duration-300 p-5 sm:p-6 flex flex-col justify-between relative group overflow-hidden"
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="h-full bg-[#06070B]/85 hover:bg-[#090B12]/95 backdrop-blur-2xl rounded-[28px] border border-white/10 hover:border-white/20 shadow-[0_0_35px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.08)] smooth-card p-5 sm:p-6 flex flex-col justify-between relative group overflow-hidden"
     >
       {/* Dynamic Stellar Nebula Highlight Node */}
       <div

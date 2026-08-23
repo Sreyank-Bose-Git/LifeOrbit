@@ -568,6 +568,36 @@ class ProceduralAudioEngine {
     }
   }
 
+  // Zen Optic Relaxation Chime (Warm singing bowl tone for eye breaks)
+  public playZenChime() {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      [392, 587.33, 880].forEach((freq, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, this.ctx!.currentTime);
+
+        const dur = 2.4 + i * 0.4;
+        gain.gain.setValueAtTime(0.001, this.ctx!.currentTime);
+        gain.gain.linearRampToValueAtTime(0.08 / (i + 1), this.ctx!.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx!.currentTime + dur);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+
+        osc.start(this.ctx!.currentTime);
+        osc.stop(this.ctx!.currentTime + dur + 0.1);
+      });
+    } catch {
+      // Audio safety
+    }
+  }
+
   // ==========================================
   // CONTROLS & STATE
   // ==========================================

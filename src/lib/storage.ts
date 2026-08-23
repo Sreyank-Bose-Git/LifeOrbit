@@ -27,6 +27,13 @@ export const DEFAULT_THEME_CONFIG: UIThemeConfig = {
   avatarIcon: "🚀",
   avatarColor: "#10b981",
   quickLogDefaultStep: 1,
+  eyeComfortPreset: "off",
+  eyeComfortWarmth: 45,
+  eyeComfortBrightness: 92,
+  reducedMotion: false,
+  softGlow: false,
+  autoNightComfort: true,
+  eyeBreakReminder202020: true,
 };
 
 export const INITIAL_PROFILES: UserProfileAccount[] = [

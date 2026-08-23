@@ -18,8 +18,9 @@ import {
   Zap,
   Sparkles,
 } from "lucide-react";
-import { ViewTab, UserProfile, UserStats } from "../types";
+import { ViewTab, UserProfile, UserStats, UIThemeConfig } from "../types";
 import { THEME_ACCENTS } from "../lib/theme";
+import { EyeComfortQuickToggle } from "./EyeComfortManager";
 
 interface BreadcrumbsBarProps {
   activeTab: ViewTab;
@@ -31,6 +32,8 @@ interface BreadcrumbsBarProps {
   onOpenCommandPalette: () => void;
   onOpenProfileHub: () => void;
   onNavigateTab: (tab: ViewTab) => void;
+  onUpdateThemeConfig?: (cfg: Partial<UIThemeConfig>) => void;
+  onTriggerEyeBreakDemo?: () => void;
 }
 
 const TAB_META: Record<ViewTab, { label: string; icon: React.FC<{ className?: string }> }> = {
@@ -67,6 +70,8 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   onOpenCommandPalette,
   onOpenProfileHub,
   onNavigateTab,
+  onUpdateThemeConfig,
+  onTriggerEyeBreakDemo,
 }) => {
   const currentTheme = THEME_ACCENTS[profile.themeConfig?.accent] || THEME_ACCENTS.emerald;
   const currentTabMeta = TAB_META[activeTab] || TAB_META.tracker;
@@ -136,6 +141,15 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             <span>Lv.{stats?.level || 1} • {stats?.xp || 0} XP</span>
           </span>
         </div>
+
+        {/* Eye Comfort Quick Toggle */}
+        {onUpdateThemeConfig && (
+          <EyeComfortQuickToggle
+            themeConfig={profile.themeConfig}
+            onUpdateThemeConfig={onUpdateThemeConfig}
+            onTriggerEyeBreakDemo={onTriggerEyeBreakDemo}
+          />
+        )}
 
         {/* Obsidian-Style Search Shortcut */}
         <button

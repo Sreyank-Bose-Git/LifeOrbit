@@ -145,6 +145,7 @@ export interface SandboxSettings {
 export type ThemeAccent = "emerald" | "violet" | "amber" | "cyan" | "rose" | "slate";
 export type WorkspaceDensity = "compact" | "balanced" | "spacious";
 export type BackgroundAnimationMode = "aurora" | "particles" | "mesh" | "cyberpunk" | "none";
+export type EyeComfortPreset = "off" | "warm" | "candlelight" | "paper" | "dim";
 
 export interface UIThemeConfig {
   accent: ThemeAccent;
@@ -158,6 +159,15 @@ export interface UIThemeConfig {
   avatarIcon: string;
   avatarColor: string;
   quickLogDefaultStep: number;
+
+  // Eye Comfort & Optic Wellness
+  eyeComfortPreset?: EyeComfortPreset;
+  eyeComfortWarmth?: number; // 0 to 100 percentage
+  eyeComfortBrightness?: number; // 70 to 100 percentage
+  reducedMotion?: boolean;
+  softGlow?: boolean;
+  autoNightComfort?: boolean;
+  eyeBreakReminder202020?: boolean;
 }
 
 export interface UserProfileAccount {

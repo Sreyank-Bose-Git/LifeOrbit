@@ -27,6 +27,7 @@ import { FeaturedBillboardCard } from "./components/FeaturedBillboardCard";
 import { EndeavorRowCarousel } from "./components/EndeavorRowCarousel";
 import { SandboxView } from "./components/SandboxView";
 import { LifeSphereOrb } from "./components/LifeSphereOrb";
+import { EyeComfortManager } from "./components/EyeComfortManager";
 import { storage } from "./lib/storage";
 import { THEME_ACCENTS } from "./lib/theme";
 import {
@@ -38,6 +39,7 @@ import {
   UserProfileAccount,
   ViewTab,
   CardLayoutMode,
+  UIThemeConfig,
 } from "./types";
 import {
   Sparkles,
@@ -68,6 +70,28 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
+
+const TAB_PAGE_VARIANTS = {
+  initial: { opacity: 0, y: 14, filter: "blur(4px)" },
+  animate: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.32,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    filter: "blur(2px)",
+    transition: {
+      duration: 0.18,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ViewTab>("tracker");
@@ -279,6 +303,18 @@ export default function App() {
 
     awardXP(100, "Workspace Customization & Profile Configured");
     showToast("Profile updated!");
+  };
+
+  const handleUpdateThemeConfig = (newConfig: Partial<UIThemeConfig>) => {
+    const updatedProfile: UserProfile = {
+      ...profile,
+      themeConfig: {
+        ...profile.themeConfig,
+        ...newConfig,
+      },
+    };
+    setProfile(updatedProfile);
+    storage.saveProfile(updatedProfile);
   };
 
   // Award XP and update stats
@@ -600,10 +636,19 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-black text-slate-100 flex p-2 sm:p-3 gap-2 sm:gap-3 antialiased selection:bg-emerald-500 selection:text-black relative">
+      {/* Eye Comfort Filter & 20-20-20 Optic Health Manager */}
+      <EyeComfortManager
+        themeConfig={profile.themeConfig}
+        onUpdateThemeConfig={handleUpdateThemeConfig}
+      />
+
       {/* Dynamic Ambient Background Canvas & Glow */}
       <AmbientBackground
         mode={profile.themeConfig?.ambientBackground || "aurora"}
         accent={profile.themeConfig?.accent || "emerald"}
+        reducedMotion={profile.themeConfig?.reducedMotion}
+        softGlow={profile.themeConfig?.softGlow}
+        isWarmMode={profile.themeConfig?.eyeComfortPreset !== "off"}
       />
 
       {/* Sidebar Navigation */}
@@ -700,6 +745,7 @@ export default function App() {
           onToggleOrbitQueue={() => setIsOrbitQueueOpen((prev) => !prev)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenProfileHub={() => setIsProfileHubOpen(true)}
+          onUpdateThemeConfig={handleUpdateThemeConfig}
           onNavigateTab={(tab) => {
             focusAudio.playClick();
             setActiveTab(tab);
@@ -713,10 +759,10 @@ export default function App() {
             {activeTab === "tracker" && (
               <motion.div
                 key="tab-tracker"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
                 className="space-y-6"
               >
                 {/* Stylized Celestial Life Spheres Orbit Bar */}
@@ -1407,10 +1453,10 @@ export default function App() {
             {activeTab === "sandbox" && (
               <motion.div
                 key="tab-sandbox"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
                 className="space-y-6"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
@@ -1452,10 +1498,10 @@ export default function App() {
             {activeTab === "matrix" && (
               <motion.div
                 key="tab-matrix"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <HabitMatrixView
                   endeavors={endeavors}
@@ -1473,10 +1519,10 @@ export default function App() {
             {activeTab === "roadmap" && (
               <motion.div
                 key="tab-roadmap"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <RoadmapView
                   endeavors={endeavors}
@@ -1492,10 +1538,10 @@ export default function App() {
             {activeTab === "timeline" && (
               <motion.div
                 key="tab-timeline"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <TimelineView
                   timeBlocks={timeBlocks}
@@ -1516,10 +1562,10 @@ export default function App() {
             {activeTab === "focus" && (
               <motion.div
                 key="tab-focus"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <FocusMode
                   endeavors={endeavors}
@@ -1534,10 +1580,10 @@ export default function App() {
             {activeTab === "insights" && (
               <motion.div
                 key="tab-insights"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <InsightsView endeavors={endeavors} stats={stats} logs={logs} />
               </motion.div>
@@ -1547,10 +1593,10 @@ export default function App() {
             {activeTab === "trophies" && (
               <motion.div
                 key="tab-trophies"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <TrophiesView
                   stats={stats}
@@ -1564,10 +1610,10 @@ export default function App() {
             {activeTab === "copilot" && (
               <motion.div
                 key="tab-copilot"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <AICopilotView
                   endeavors={endeavors}
@@ -1581,10 +1627,10 @@ export default function App() {
             {activeTab === "settings" && (
               <motion.div
                 key="tab-settings"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                variants={TAB_PAGE_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
               >
                 <SettingsView
                   profile={profile}
@@ -1690,6 +1736,8 @@ export default function App() {
         onOpenBackup={() => setIsBackupModalOpen(true)}
         onOpenDeviceSync={() => setIsIntegrationsModalOpen(true)}
         onToggleOrbitQueue={() => setIsOrbitQueueOpen((prev) => !prev)}
+        themeConfig={profile.themeConfig}
+        onUpdateThemeConfig={handleUpdateThemeConfig}
       />
 
       <EndeavorDetailModal

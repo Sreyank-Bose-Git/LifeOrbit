@@ -1,4 +1,4 @@
-import { ThemeAccent, WorkspaceDensity } from "../types";
+import { ThemeAccent, WorkspaceDensity, EyeComfortPreset } from "../types";
 
 export interface AccentThemeClasses {
   id: ThemeAccent;
@@ -181,3 +181,89 @@ export const ROLE_PRESETS = [
     focusHours: 3,
   },
 ];
+
+export interface EyeComfortPresetInfo {
+  id: EyeComfortPreset;
+  label: string;
+  sublabel: string;
+  icon: string;
+  kelvin: string;
+  description: string;
+  filterStyle: (warmth: number, brightness: number) => string;
+  tintOverlayColor?: string;
+  tintOverlayOpacity?: (warmth: number) => number;
+}
+
+export const EYE_COMFORT_PRESETS: Record<EyeComfortPreset, EyeComfortPresetInfo> = {
+  off: {
+    id: "off",
+    label: "Crisp Precision",
+    sublabel: "Standard 6500K",
+    icon: "☀️",
+    kelvin: "6500K",
+    description: "Standard high-contrast color calibration without spectral attenuation.",
+    filterStyle: () => "none",
+  },
+  warm: {
+    id: "warm",
+    label: "Amber Warmth",
+    sublabel: "Sunset 3400K",
+    icon: "🌅",
+    kelvin: "3400K",
+    description: "Filters harsh blue wavelengths with cozy amber warmth to reduce evening eye fatigue.",
+    filterStyle: (warmth, brightness) => {
+      const sepiaVal = (warmth / 100) * 0.38;
+      const brightVal = brightness / 100;
+      const hueShift = -Math.round((warmth / 100) * 14);
+      return `sepia(${sepiaVal.toFixed(2)}) hue-rotate(${hueShift}deg) brightness(${brightVal.toFixed(2)}) contrast(0.97)`;
+    },
+    tintOverlayColor: "#f59e0b",
+    tintOverlayOpacity: (warmth) => (warmth / 100) * 0.09,
+  },
+  candlelight: {
+    id: "candlelight",
+    label: "Candlelight Glow",
+    sublabel: "Deep Night 2400K",
+    icon: "🕯️",
+    kelvin: "2400K",
+    description: "Deep soothing amber-golden spectrum engineered for late-night focus and melatonin protection.",
+    filterStyle: (warmth, brightness) => {
+      const sepiaVal = 0.35 + (warmth / 100) * 0.35;
+      const brightVal = (brightness / 100) * 0.96;
+      const hueShift = -Math.round(15 + (warmth / 100) * 15);
+      return `sepia(${sepiaVal.toFixed(2)}) hue-rotate(${hueShift}deg) brightness(${brightVal.toFixed(2)}) contrast(0.95)`;
+    },
+    tintOverlayColor: "#ea580c",
+    tintOverlayOpacity: (warmth) => 0.06 + (warmth / 100) * 0.12,
+  },
+  paper: {
+    id: "paper",
+    label: "E-Ink / Slate Paper",
+    sublabel: "Zero Chromatic Strain",
+    icon: "📜",
+    kelvin: "Neutral Paper",
+    description: "Monochromatic, low-strain matte tone that relaxes optic nerves and mimics physical print.",
+    filterStyle: (warmth, brightness) => {
+      const grayVal = 0.75 + (warmth / 100) * 0.2;
+      const sepiaVal = (warmth / 100) * 0.25;
+      const brightVal = (brightness / 100) * 0.95;
+      return `grayscale(${grayVal.toFixed(2)}) sepia(${sepiaVal.toFixed(2)}) brightness(${brightVal.toFixed(2)}) contrast(0.92)`;
+    },
+    tintOverlayColor: "#d97706",
+    tintOverlayOpacity: (warmth) => (warmth / 100) * 0.04,
+  },
+  dim: {
+    id: "dim",
+    label: "Midnight Dimmer",
+    sublabel: "Ultra-Low Lumens",
+    icon: "🌙",
+    kelvin: "Subdued Lumens",
+    description: "Softens stark white contrast and decreases overall display luminous glare for dark rooms.",
+    filterStyle: (warmth, brightness) => {
+      const brightVal = (brightness / 100) * 0.88;
+      const sepiaVal = (warmth / 100) * 0.15;
+      return `brightness(${brightVal.toFixed(2)}) contrast(0.90) sepia(${sepiaVal.toFixed(2)})`;
+    },
+  },
+};
+

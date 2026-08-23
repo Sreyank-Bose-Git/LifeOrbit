@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 @layer base {
   body {
     background-color: #06070B;
@@ -8,16 +22,23 @@
     font-family: 'Outfit', 'Plus Jakarta Sans', 'Satoshi', sans-serif;
     letter-spacing: -0.015em;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    overflow-x: hidden;
+    transition: background-color 0.4s var(--ease-out-expo), filter 0.4s var(--ease-out-expo);
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Syne', 'Clash Display', 'Cabinet Grotesk', sans-serif;
-    letter-spacing: -0.025em;
-  }
-
-  code, kbd, samp, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: -0.02em;
+  /* Universal smooth interaction transitions for buttons, interactive cards, and links */
+  button, 
+  a, 
+  input, 
+  select, 
+  textarea,
+  [role="button"] {
+    transition: color 0.2s var(--ease-out-expo), 
+                background-color 0.25s var(--ease-out-expo), 
+                border-color 0.25s var(--ease-out-expo), 
+                box-shadow 0.3s var(--ease-out-expo), 
+                transform 0.25s var(--ease-out-expo), 
+                opacity 0.2s var(--ease-out-expo);
   }
 
   button,
@@ -28,6 +49,12 @@
   input[type="checkbox"],
   input[type="radio"] {
     cursor: pointer;
+    user-select: none;
+  }
+
+  button:active,
+  [role="button"]:active {
+    transition-duration: 0.08s;
   }
 
   button:disabled,
@@ -44,6 +71,31 @@
   textarea {
     cursor: text;
   }
+}
+
+/* Hardware accelerated smooth rendering classes */
+.smooth-transform {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.smooth-transition {
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.smooth-card {
+  transition: transform 0.35s var(--ease-out-expo), 
+              box-shadow 0.35s var(--ease-out-expo), 
+              border-color 0.3s var(--ease-out-expo), 
+              background-color 0.3s var(--ease-out-expo);
+  will-change: transform, box-shadow;
+}
+
+.smooth-progress-bar {
+  transition: width 0.6s var(--ease-out-expo), 
+              transform 0.6s var(--ease-out-expo), 
+              background-color 0.4s var(--ease-out-expo);
 }
 
 /* Stylized Display Typography Utilities */

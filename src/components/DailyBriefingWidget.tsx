@@ -154,8 +154,8 @@ export const DailyBriefingWidget: React.FC<DailyBriefingWidgetProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="relative z-10 px-5 pb-5 sm:px-7 sm:pb-7 pt-0 border-t border-white/5 space-y-4"
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 px-5 pb-5 sm:px-7 sm:pb-7 pt-0 border-t border-white/5 space-y-4 overflow-hidden"
           >
             {/* Quick Telemetry Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
