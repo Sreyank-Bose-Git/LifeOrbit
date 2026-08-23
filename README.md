@@ -2,6 +2,8 @@
 
 # 🪐 LifeOrbit OS
 
+## Go To [Main Site](https://sreyank-bose-git.github.io/LifeOrbit/)
+
 ### *The Ultimate Local-First Life Planner & Universal Activity Tracker*
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
