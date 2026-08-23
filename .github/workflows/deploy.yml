@@ -36,6 +36,9 @@ jobs:
       - name: Build Production Static Bundle
         run: npm run build
 
+      - name: Copy index.html to 404.html for SPA Routing
+        run: cp ./dist/index.html ./dist/404.html
+
       - name: Setup Pages Ingress
         uses: actions/configure-pages@v5
 
