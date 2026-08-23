@@ -33,7 +33,7 @@ async function generateContentWithFallback(
   systemInstruction?: string
 ): Promise<string> {
   // Use models in order of current real-time throughput and availability
-  const models = ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"];
+  const models = ["gemini-3.1-pro-preview", "gemini-3.7-flash"];
 
   for (const model of models) {
     try {
