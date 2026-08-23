@@ -65,8 +65,43 @@ export const AICopilotView: React.FC<AICopilotViewProps> = ({
           },
         ]);
       }
-    } catch (err) {
-      console.error("Coach error:", err);
+    } catch {
+      // Deterministic offline/static fallback for GitHub Pages & standalone static hosting
+      const topGoal = endeavors.find((e) => e.priority === "high") || endeavors[0];
+      const activeCount = endeavors.filter((e) => e.status === "active").length;
+      const fallbackData: AICoachFeedback = {
+        headline:
+          userEnergy === "high"
+            ? "High Peak Energy: Channel momentum directly into your highest-leverage endeavor."
+            : userEnergy === "medium"
+            ? "Steady Velocity: Protect consistency and maintain active streaks today."
+            : "Cognitive Bandwidth Conservation: Prioritize micro-commitments and restorative pacing.",
+        insights: [
+          topGoal
+            ? `Prime Sprint: Allocate a dedicated 25-35 minute focus block to "${topGoal.title}".`
+            : "Define a primary focus endeavor in your workspace to anchor your daily trajectory.",
+          `Streak Continuity: You have ${activeCount} active pursuit${activeCount === 1 ? "" : "s"}. Micro-progress beats zero progress.`,
+          "Optic & Energy Pacing: Use 20-20-20 eye comfort rests and sync tasks with circadian energy.",
+        ],
+        actionRecommendation: topGoal
+          ? `Initiate a 25-minute deep focus sprint on "${topGoal.title}".`
+          : "Create a new endeavor or activate a Life Sphere to begin tracking.",
+        motivationalQuote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+      };
+      setFeedback(fallbackData);
+
+      if (customPrompt) {
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "user", text: customPrompt },
+          {
+            role: "coach",
+            text: `${fallbackData.headline}\n\n${fallbackData.insights.join("\n• ")}\n\nAction: ${
+              fallbackData.actionRecommendation
+            }`,
+          },
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -138,8 +138,80 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
 
       // Switch to manual view to let user review and tweak
       setTab("manual");
-    } catch (err: any) {
-      setAiError(err.message || "Could not analyze prompt. You can enter details manually.");
+    } catch {
+      // Local client heuristic parser for static hosting (GitHub Pages)
+      const lower = aiPrompt.toLowerCase();
+      let arch: "habit" | "meter" | "milestone" = "habit";
+      let cat: Category = "personal";
+      let targetVal = 30;
+      let startVal = 0;
+      let unitStr = "days";
+
+      if (
+        lower.includes("$") ||
+        lower.includes("save") ||
+        lower.includes("invest") ||
+        lower.includes("dollar") ||
+        lower.includes("fund")
+      ) {
+        arch = "meter";
+        cat = "finance";
+        unitStr = "USD";
+        const match = aiPrompt.match(/\d+[\d,]*/);
+        targetVal = match ? parseInt(match[0].replace(/,/g, ""), 10) : 1000;
+      } else if (
+        lower.includes("read") ||
+        lower.includes("book") ||
+        lower.includes("page") ||
+        lower.includes("learn") ||
+        lower.includes("study")
+      ) {
+        arch = "meter";
+        cat = "learning";
+        unitStr = lower.includes("page") ? "pages" : "books";
+        const match = aiPrompt.match(/\d+/);
+        targetVal = match ? parseInt(match[0], 10) : 12;
+      } else if (
+        lower.includes("run") ||
+        lower.includes("km") ||
+        lower.includes("mile") ||
+        lower.includes("gym") ||
+        lower.includes("workout") ||
+        lower.includes("pushup") ||
+        lower.includes("weight")
+      ) {
+        arch = "meter";
+        cat = "health";
+        unitStr = lower.includes("km") ? "km" : lower.includes("mile") ? "miles" : "sessions";
+        const match = aiPrompt.match(/\d+/);
+        targetVal = match ? parseInt(match[0], 10) : 50;
+      } else if (
+        lower.includes("build") ||
+        lower.includes("launch") ||
+        lower.includes("saas") ||
+        lower.includes("app") ||
+        lower.includes("project")
+      ) {
+        arch = "milestone";
+        cat = "career";
+        unitStr = "%";
+        targetVal = 100;
+        setMilestones([
+          { id: `m-${Date.now()}-1`, title: "Architecture & Research", completed: false, weight: 25 },
+          { id: `m-${Date.now()}-2`, title: "Core Sprint Execution", completed: false, weight: 50 },
+          { id: `m-${Date.now()}-3`, title: "Testing, Polish & Release", completed: false, weight: 25 },
+        ]);
+      }
+
+      setTitle(aiPrompt.slice(0, 45));
+      setDescription(`Structured target: ${aiPrompt}`);
+      setArchetype(arch);
+      setCategory(cat);
+      setTargetValue(targetVal);
+      setStartValue(startVal);
+      setCurrentValue(startVal);
+      setUnit(unitStr);
+      setTab("manual");
     } finally {
       setIsAiLoading(false);
     }
