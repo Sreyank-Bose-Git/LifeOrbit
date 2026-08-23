@@ -30,6 +30,10 @@ import { LifeSphereOrb } from "./components/LifeSphereOrb";
 import { EyeComfortManager } from "./components/EyeComfortManager";
 import { storage } from "./lib/storage";
 import { THEME_ACCENTS } from "./lib/theme";
+import { PublicLandingPage } from "./components/PublicLandingPage";
+import { AuthModal } from "./components/AuthModal";
+import { onAuthStateChanged, FirebaseUser, signOut, auth } from "./lib/firebase";
+import { syncCloudToLocal, syncLocalToCloud } from "./lib/cloudSync";
 import {
   Endeavor,
   ProgressLog,
@@ -94,6 +98,15 @@ const TAB_PAGE_VARIANTS = {
 };
 
 export default function App() {
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
+  const [authModalConfig, setAuthModalConfig] = useState<{ isOpen: boolean; mode: "login" | "signup" }>({
+    isOpen: false,
+    mode: "login",
+  });
+
   const [activeTab, setActiveTab] = useState<ViewTab>("tracker");
   const [endeavors, setEndeavors] = useState<Endeavor[]>([]);
   const [logs, setLogs] = useState<ProgressLog[]>([]);
@@ -207,7 +220,43 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+
+    // Setup Firebase Auth Listener
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+        setIsGuest(false);
+        // Attempt cloud sync to load remote data
+        try {
+          const remoteData = await syncCloudToLocal(user.uid);
+          if (remoteData) {
+            loadData(); // reload React state from local storage which was just updated
+          }
+        } catch (e) {
+          console.error("Error during initial cloud sync:", e);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setIsAuthChecking(false);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  // Cloud Sync Effect
+  useEffect(() => {
+    if (currentUser && !isAuthChecking) {
+      const timeout = setTimeout(() => {
+        syncLocalToCloud(currentUser.uid, {
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          emailVerified: currentUser.emailVerified
+        }).catch(console.error);
+      }, 5000); // debounce 5s
+      return () => clearTimeout(timeout);
+    }
+  }, [endeavors, logs, timeBlocks, stats, profile, profiles, activeProfileId, currentUser, isAuthChecking]);
 
   // Persistent Focus Timer Countdown Engine
   useEffect(() => {
@@ -634,6 +683,34 @@ export default function App() {
     return matchesCategory && matchesArchetype && matchesSearch;
   });
 
+  if (isAuthChecking) {
+    return (
+      <div className="h-screen w-screen bg-black flex items-center justify-center">
+        <Orbit className="w-8 h-8 text-emerald-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!currentUser && !isGuest) {
+    return (
+      <>
+        <PublicLandingPage
+          onOpenAuth={(mode) => setAuthModalConfig({ isOpen: true, mode })}
+          onEnterWorkspaceAsGuest={() => setIsGuest(true)}
+        />
+        <AuthModal
+          isOpen={authModalConfig.isOpen}
+          initialMode={authModalConfig.mode}
+          onClose={() => setAuthModalConfig((prev) => ({ ...prev, isOpen: false }))}
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            setIsGuest(false);
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-black text-slate-100 flex p-2 sm:p-3 gap-2 sm:gap-3 antialiased selection:bg-emerald-500 selection:text-black relative">
       {/* Eye Comfort Filter & 20-20-20 Optic Health Manager */}
@@ -665,6 +742,12 @@ export default function App() {
         onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenProfileHub={() => setIsProfileHubOpen(true)}
+        currentUser={currentUser}
+        onSignOut={() => signOut(auth)}
+        onSignIn={() => {
+          setIsGuest(false);
+          setAuthModalConfig({ isOpen: true, mode: "login" });
+        }}
       />
 
       {/* Main Content Area (Floating Island) */}

@@ -25,6 +25,7 @@ import {
 import { ViewTab, UserStats, UserProfile } from "../types";
 import { THEME_ACCENTS } from "../lib/theme";
 import { focusAudio } from "../lib/audio";
+import { FirebaseUser } from "../lib/firebase";
 
 interface SidebarProps {
   activeTab: ViewTab;
@@ -40,6 +41,9 @@ interface SidebarProps {
   onOpenCommandPalette?: () => void;
   onOpenProfileHub?: () => void;
   onReplayIntroLogo?: () => void;
+  currentUser?: FirebaseUser | null;
+  onSignOut?: () => void;
+  onSignIn?: () => void;
 }
 
 interface NavSection {
@@ -67,6 +71,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenCommandPalette,
   onOpenProfileHub,
   onReplayIntroLogo,
+  currentUser,
+  onSignOut,
+  onSignIn,
 }) => {
   const currentTheme = THEME_ACCENTS[profile.themeConfig?.accent] || THEME_ACCENTS.emerald;
   const [hoveredTab, setHoveredTab] = useState<ViewTab | null>(null);
@@ -518,6 +525,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Users className="w-3.5 h-3.5 text-slate-500 group-hover:text-white shrink-0 transition mr-1" />
             )}
           </motion.div>
+
+          {/* Auth Button */}
+          {isOpen && (
+            <div className="mt-2 text-center">
+              {currentUser ? (
+                <button
+                  onClick={() => onSignOut && onSignOut()}
+                  className="text-[10px] text-slate-500 hover:text-rose-400 font-mono transition-colors"
+                >
+                  Disconnect from {currentUser.email}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onSignIn && onSignIn()}
+                  className="text-[10px] text-emerald-500 hover:text-emerald-400 font-mono transition-colors"
+                >
+                  Connect to Cloud Orbit
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </motion.aside>
     </>
