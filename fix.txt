@@ -1,0 +1,18 @@
+
+  // Save new or edited endeavor
+  const handleSaveEndeavor = (newEndeavor: Endeavor) => {
+    const exists = endeavors.some((e) => e.id === newEndeavor.id);
+    let updated: Endeavor[];
+    if (exists) {
+      updated = endeavors.map((e) => (e.id === newEndeavor.id ? newEndeavor : e));
+      showToast(`Updated "${newEndeavor.title}"`);
+    } else {
+      updated = [newEndeavor, ...endeavors];
+      awardXP(50, `Created endeavor "${newEndeavor.title}"`);
+      showToast(`Created "${newEndeavor.title}"`);
+    }
+    setEndeavors(updated);
+    storage.saveEndeavors(updated);
+
+    if (selectedEndeavorForDetail && selectedEndeavorForDetail.id === newEndeavor.id) {
+      setSelectedEndeavorForDetail(newEndeavor);

@@ -100,7 +100,7 @@ export const MiniFocusPlayer: React.FC<MiniFocusPlayerProps> = ({
         {/* Endeavor Icon or Timer badge */}
         <div
           onClick={onMaximize}
-          className="w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0 cursor-pointer relative overflow-hidden transition group-hover:scale-105"
+          className="w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0 cursor-pointer relative overflow-hidden transition group-hover:scale-105 z-0 group-hover:z-10"
           style={{
             backgroundColor: `${endeavorColor}20`,
             borderColor: `${endeavorColor}40`,

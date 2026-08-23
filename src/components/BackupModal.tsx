@@ -69,7 +69,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#0D0D0D] rounded-3xl max-w-xl w-full border border-white/10 shadow-2xl overflow-hidden">
+      <div className="bg-white/[0.02] rounded-3xl max-w-xl w-full border border-white/10 shadow-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/5">
           <div className="flex items-center space-x-2">
             <Download className="w-5 h-5 text-emerald-400" />

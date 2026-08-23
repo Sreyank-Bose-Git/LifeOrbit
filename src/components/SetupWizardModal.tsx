@@ -25,6 +25,8 @@ import {
 import confetti from "canvas-confetti";
 import { UserProfile, Category, ThemeAccent, WorkspaceDensity, Endeavor } from "../types";
 import { THEME_ACCENTS, DENSITY_CONFIG, ROLE_PRESETS } from "../lib/theme";
+import { LifeSphereOrb } from "./LifeSphereOrb";
+import { focusAudio } from "../lib/audio";
 
 interface SetupWizardModalProps {
   isOpen: boolean;
@@ -239,9 +241,9 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-[#0D0D0D] rounded-3xl max-w-3xl w-full border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white/[0.02] rounded-3xl max-w-3xl w-full border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header with Progress Steps */}
-        <div className="px-6 py-5 border-b border-white/5 bg-[#141414]/70 flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-white/5 bg-white/[0.04]/70 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className={`w-9 h-9 rounded-xl ${currentTheme.buttonBg} ${currentTheme.buttonText} flex items-center justify-center shadow-xs`}>
               <Wand2 className="w-5 h-5 stroke-[2.5]" />
@@ -305,7 +307,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                       value={profile.name}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                       placeholder="e.g. Alex Rivera"
-                      className="w-full pl-10 pr-4 py-2.5 bg-[#141414] border border-white/10 rounded-xl text-sm font-medium text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm font-medium text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
                     />
                   </div>
                 </div>
@@ -324,7 +326,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                       })
                     }
                     placeholder="e.g. Hyperion Command OS"
-                    className="w-full px-4 py-2.5 bg-[#141414] border border-white/10 rounded-xl text-sm font-medium text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-sm font-medium text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
@@ -345,7 +347,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
                           isSelected
                             ? `${currentTheme.bgSubtle} ${currentTheme.borderSubtle} ring-1 ring-${currentTheme.primary}`
-                            : "bg-[#141414] border-white/5 hover:border-white/15"
+                            : "bg-white/[0.04] border-white/5 hover:border-white/15"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1.5">
@@ -370,7 +372,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                     value={profile.role}
                     onChange={(e) => setProfile({ ...profile, role: e.target.value })}
                     placeholder="e.g. Full-Stack Architect & Marathon Runner"
-                    className="w-full px-4 py-2.5 bg-[#141414] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
 
@@ -383,7 +385,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                     value={profile.northStarMotto}
                     onChange={(e) => setProfile({ ...profile, northStarMotto: e.target.value })}
                     placeholder="e.g. Compound daily momentum with uncompromising consistency."
-                    className="w-full px-4 py-2 bg-[#141414] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-4 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
@@ -401,30 +403,37 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                   Select the domains you want prioritized in your dashboard and AI coaching.
                 </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {lifeSphereOptions.map((opt) => {
-                    const isSelected = profile.selectedLifeSpheres.includes(opt.id);
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 p-4 rounded-2xl bg-black/40 border border-white/10">
+                  {(
+                    [
+                      "health",
+                      "career",
+                      "learning",
+                      "finance",
+                      "mindfulness",
+                      "creative",
+                      "personal",
+                    ] as Category[]
+                  ).map((sphereId) => {
+                    const isSelected = profile.selectedLifeSpheres.includes(sphereId);
                     return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => handleToggleSphere(opt.id)}
-                        className={`p-3 rounded-2xl border transition text-left flex items-center justify-between ${
-                          isSelected
-                            ? `${opt.color} ring-1 ring-white/10`
-                            : "bg-[#141414] border-white/5 text-slate-400 hover:text-slate-200 hover:border-white/10"
-                        }`}
-                      >
-                        <span className="text-xs font-bold">{opt.label}</span>
-                        {isSelected ? <CheckCircle2 className="w-4 h-4" /> : <div className="w-4 h-4 rounded-full border border-white/20" />}
-                      </button>
+                      <LifeSphereOrb
+                        key={sphereId}
+                        sphereId={sphereId}
+                        isSelected={isSelected}
+                        size="sm"
+                        onClick={() => {
+                          focusAudio.playClick();
+                          handleToggleSphere(sphereId);
+                        }}
+                      />
                     );
                   })}
                 </div>
               </div>
 
               {/* AI Starter Blueprint Generator */}
-              <div className="bg-[#141414] rounded-2xl p-5 border border-white/10 space-y-4">
+              <div className="bg-white/[0.04] rounded-2xl p-5 border border-white/10 space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
@@ -514,7 +523,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         className={`p-3.5 rounded-2xl border transition text-left flex flex-col justify-between ${
                           isSelected
                             ? `${acc.bgSubtle} ${acc.borderSubtle} ring-2 ring-${acc.primary}`
-                            : "bg-[#141414] border-white/5 hover:border-white/15"
+                            : "bg-white/[0.04] border-white/5 hover:border-white/15"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -556,7 +565,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         className={`p-3 rounded-2xl border text-center transition ${
                           isSelected
                             ? `${currentTheme.bgSubtle} ${currentTheme.borderSubtle} text-white font-bold`
-                            : "bg-[#141414] border-white/5 text-slate-400 hover:text-slate-200"
+                            : "bg-white/[0.04] border-white/5 text-slate-400 hover:text-slate-200"
                         }`}
                       >
                         <span className="text-xs block capitalize">{dKey}</span>
@@ -585,7 +594,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         },
                       })
                     }
-                    className="p-3 bg-[#141414] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
+                    className="p-3 bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
                   >
                     <div className="flex items-center space-x-2.5">
                       <Flame className="w-4 h-4 text-amber-400" />
@@ -618,7 +627,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         },
                       })
                     }
-                    className="p-3 bg-[#141414] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
+                    className="p-3 bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
                   >
                     <div className="flex items-center space-x-2.5">
                       <Layers className="w-4 h-4 text-indigo-400" />
@@ -651,7 +660,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         },
                       })
                     }
-                    className="p-3 bg-[#141414] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
+                    className="p-3 bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/10"
                   >
                     <div className="flex items-center space-x-2.5">
                       <Volume2 className="w-4 h-4 text-teal-400" />
@@ -674,7 +683,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                   </div>
 
                   {/* Ambient Preset */}
-                  <div className="p-3 bg-[#141414] rounded-2xl border border-white/5 flex items-center justify-between">
+                  <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/5 flex items-center justify-between">
                     <div>
                       <span className="text-xs font-semibold text-white block">Ambient Flow Noise</span>
                       <span className="text-[10px] text-slate-400">Synthesizer preset for focus mode</span>
@@ -752,7 +761,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                     type="time"
                     value={profile.wakeTime}
                     onChange={(e) => setProfile({ ...profile, wakeTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#141414] border border-white/10 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
 
@@ -765,13 +774,13 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                     type="time"
                     value={profile.sleepTime}
                     onChange={(e) => setProfile({ ...profile, sleepTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#141414] border border-white/10 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/10 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
 
               {/* Summary Review Card */}
-              <div className="p-4 bg-[#141414] rounded-2xl border border-white/10 space-y-2">
+              <div className="p-4 bg-white/[0.04] rounded-2xl border border-white/10 space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Ready to Launch Customized Command Center:
                 </span>
@@ -801,7 +810,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
         </div>
 
         {/* Modal Footer Navigation */}
-        <div className="px-6 py-4 border-t border-white/5 bg-[#141414]/70 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.04]/70 flex items-center justify-between">
           <div>
             {step > 1 && (
               <button

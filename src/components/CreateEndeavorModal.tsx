@@ -13,13 +13,20 @@ import {
   Calendar,
   Clock,
   Zap,
+  Orbit,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Endeavor, EndeavorArchetype, Category, MilestoneItem } from "../types";
 
 interface CreateEndeavorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (endeavor: Omit<Endeavor, "id" | "createdAt" | "updatedAt" | "history" | "streakCount" | "bestStreak">) => void;
+  onSave: (
+    endeavor: Omit<
+      Endeavor,
+      "id" | "createdAt" | "updatedAt" | "history" | "streakCount" | "bestStreak"
+    >
+  ) => void;
 }
 
 const CATEGORIES: { id: Category; label: string }[] = [
@@ -168,7 +175,9 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
       targetValue: Number(targetValue) || 1,
       startValue: Number(startValue) || 0,
       currentValue: Number(currentValue) || Number(startValue) || 0,
-      unit: unit.trim() || (archetype === "habit" ? "days" : archetype === "milestone" ? "%" : "units"),
+      unit:
+        unit.trim() ||
+        (archetype === "habit" ? "days" : archetype === "milestone" ? "%" : "units"),
       frequency,
       status: "active",
       priority,
@@ -185,81 +194,99 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#141414] rounded-3xl max-w-xl w-full border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col text-slate-200">
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/85 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="bg-[#06070B]/95 backdrop-blur-3xl rounded-[32px] max-w-xl w-full border border-white/15 shadow-[0_0_80px_rgba(0,0,0,0.95)] overflow-hidden max-h-[92vh] flex flex-col text-slate-200 relative"
+      >
+        {/* Ambient Grid overlay */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#0D0D0D]">
+        <div className="relative z-10 px-6 py-5 border-b border-white/10 flex items-center justify-between bg-white/[0.02] font-mono">
           <div>
-            <h2 className="text-lg font-bold text-white">Add New Endeavor</h2>
-            <p className="text-xs text-slate-400">Track any habit, quantifiable metric, or project roadmap</p>
+            <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-0.5 flex items-center space-x-1.5">
+              <Orbit className="w-3.5 h-3.5" />
+              <span>ORBIT PROTOCOL // INITIALIZATION</span>
+            </div>
+            <h2 className="text-lg font-bold text-white uppercase tracking-tight">
+              Create New Orbit Endeavor
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-500 hover:text-slate-200 hover:bg-white/5 rounded-xl transition"
+            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded-xl transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="px-6 pt-3 pb-2 border-b border-white/5 bg-[#141414] flex space-x-2">
+        <div className="relative z-10 px-6 pt-3 pb-2 border-b border-white/10 bg-[#06070B] flex space-x-2 font-mono">
           <button
             type="button"
             onClick={() => setTab("ai")}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-xl text-xs font-semibold transition ${
+            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               tab === "ai"
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs"
+                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
                 : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
             }`}
           >
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>AI Natural Language Parser</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>AI Parser</span>
           </button>
           <button
             type="button"
             onClick={() => setTab("manual")}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-xl text-xs font-semibold transition ${
+            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               tab === "manual"
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs"
+                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(52,211,153,0.2)]"
                 : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
             }`}
           >
-            <Layers className="w-4 h-4 text-slate-400" />
-            <span>Detailed Custom Setup</span>
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Manual Telemetry</span>
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="relative z-10 p-6 overflow-y-auto flex-1 font-mono">
           {tab === "ai" ? (
             <div className="space-y-4">
-              <div className="bg-[#0D0D0D] border border-white/5 rounded-2xl p-4 text-xs text-slate-300 space-y-2">
-                <div className="flex items-center space-x-2 font-semibold text-emerald-400">
-                  <Bot className="w-4 h-4 text-emerald-400" />
-                  <span>Just describe what you want to achieve or track</span>
+              <div className="bg-[#06070B] border border-white/10 rounded-2xl p-4 text-xs text-slate-300 space-y-2 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                <div className="flex items-center space-x-2 font-bold text-cyan-400 uppercase">
+                  <Bot className="w-4 h-4 text-cyan-400" />
+                  <span>Natural Language Mission Specifier</span>
                 </div>
-                <p className="text-slate-400 leading-relaxed">
-                  Our AI automatically detects whether your endeavor is a <strong className="text-white">Quantifiable Target</strong> (e.g. Save $5,000, Read 20 books), a <strong className="text-white">Daily Habit</strong> (e.g. 15min meditation, no junk food), or a <strong className="text-white">Milestone Project</strong> (e.g. Launch a SaaS app, Pass AWS Certification).
+                <p className="text-slate-400 leading-relaxed font-sans text-xs">
+                  Describe what you want to achieve or track. LifeOrbit OS will automatically classify
+                  the archetype (Target Meter, Daily Habit, or Milestone Project) and generate telemetry steps.
                 </p>
-                <div className="pt-1 flex flex-wrap gap-1.5">
+                <div className="pt-1 flex flex-wrap gap-1.5 font-mono">
                   <button
                     type="button"
-                    onClick={() => setAiPrompt("Read 30 pages of non-fiction books every day before bed")}
-                    className="text-[11px] bg-white/5 border border-white/5 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition"
+                    onClick={() =>
+                      setAiPrompt("Read 30 pages of non-fiction books every day before bed")
+                    }
+                    className="text-[10px] bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
                   >
                     "Read 30 pages daily"
                   </button>
                   <button
                     type="button"
                     onClick={() => setAiPrompt("Save $10,000 for emergency fund in 10 months")}
-                    className="text-[11px] bg-white/5 border border-white/5 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition"
+                    className="text-[10px] bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
                   >
                     "Save $10,000 for fund"
                   </button>
                   <button
                     type="button"
-                    onClick={() => setAiPrompt("Build and launch my full-stack web application in 5 phases")}
-                    className="text-[11px] bg-white/5 border border-white/5 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition"
+                    onClick={() =>
+                      setAiPrompt("Build and launch my full-stack web application in 5 phases")
+                    }
+                    className="text-[10px] bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition cursor-pointer"
                   >
                     "Launch web app in 5 phases"
                   </button>
@@ -267,7 +294,7 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                   Your Activity / Endeavor Goal
                 </label>
                 <textarea
@@ -275,7 +302,7 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="e.g., I want to run 150 km this summer starting from 10km, tracking my runs 3 times a week at 7:00 AM..."
                   rows={4}
-                  className="w-full px-3.5 py-2.5 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition"
+                  className="w-full px-3.5 py-2.5 bg-[#06070B] border border-white/15 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition font-sans"
                 />
               </div>
 
@@ -285,17 +312,17 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
                 type="button"
                 onClick={handleAiParse}
                 disabled={isAiLoading || !aiPrompt.trim()}
-                className="w-full flex items-center justify-center space-x-2 py-3 bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-black rounded-xl font-bold text-sm shadow-xs transition disabled:opacity-50"
+                className="w-full flex items-center justify-center space-x-2 py-3 bg-cyan-400 hover:bg-cyan-300 active:scale-98 text-black rounded-xl font-bold text-xs uppercase shadow-[0_0_20px_rgba(34,211,238,0.3)] transition disabled:opacity-50 cursor-pointer"
               >
                 {isAiLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Analyzing & Designing Roadmap...</span>
+                    <span>Analyzing Flight Trajectory...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Auto-Generate Plan & Configure</span>
+                    <span>Auto-Generate Flight Plan</span>
                   </>
                 )}
               </button>
@@ -304,140 +331,122 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Title & Description */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Title *</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Endeavor Title *
+                </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Read 24 Books This Year"
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="e.g. Master Rust, Daily 5km Run, Launch SaaS"
+                  className="w-full px-3.5 py-2 bg-[#06070B] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 font-sans"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Description / Purpose
+                </label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Why is this important to you?"
-                  className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="Why is this orbit meaningful to you?"
+                  className="w-full px-3.5 py-2 bg-[#06070B] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 font-sans"
                 />
               </div>
 
               {/* Archetype Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                  Activity Archetype
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Endeavor Archetype
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setArchetype("meter");
-                      setUnit("units");
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition ${
-                      archetype === "meter"
-                        ? "border-emerald-500/50 bg-emerald-500/10 text-white font-semibold"
-                        : "border-white/5 bg-black/30 text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                    }`}
-                  >
-                    <Target className="w-4 h-4 text-emerald-400 mb-1" />
-                    <span className="text-xs font-bold">Meter</span>
-                    <span className="text-[10px] text-slate-500 font-normal">Quantifiable numbers</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setArchetype("habit");
-                      setUnit("days");
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition ${
-                      archetype === "habit"
-                        ? "border-amber-500/50 bg-amber-500/10 text-white font-semibold"
-                        : "border-white/5 bg-black/30 text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                    }`}
-                  >
-                    <Flame className="w-4 h-4 text-amber-400 mb-1" />
-                    <span className="text-xs font-bold">Habit</span>
-                    <span className="text-[10px] text-slate-500 font-normal">Daily/weekly streak</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setArchetype("milestone");
-                      setUnit("%");
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition ${
-                      archetype === "milestone"
-                        ? "border-blue-500/50 bg-blue-500/10 text-white font-semibold"
-                        : "border-white/5 bg-black/30 text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-blue-400 mb-1" />
-                    <span className="text-xs font-bold">Project</span>
-                    <span className="text-[10px] text-slate-500 font-normal">Multi-stage roadmap</span>
-                  </button>
+                  {[
+                    { id: "meter", label: "Progress Meter", desc: "Quantifiable units" },
+                    { id: "habit", label: "Daily Habit", desc: "Streak check-ins" },
+                    { id: "milestone", label: "Milestone", desc: "Step-by-step phases" },
+                  ].map((arch) => (
+                    <button
+                      key={arch.id}
+                      type="button"
+                      onClick={() => setArchetype(arch.id as EndeavorArchetype)}
+                      className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        archetype === arch.id
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.2)]"
+                          : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-white uppercase">{arch.label}</div>
+                      <div className="text-[9px] text-slate-500 leading-tight">{arch.desc}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Dynamic Archetype Metrics */}
+              {/* Dynamic Archetype Config Fields */}
               {archetype === "meter" && (
-                <div className="grid grid-cols-3 gap-2 bg-black/40 p-3 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-3 gap-2 bg-[#06070B] p-3 rounded-2xl border border-white/10">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Target</label>
+                    <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase">
+                      Target
+                    </label>
                     <input
                       type="number"
-                      required
                       value={targetValue}
                       onChange={(e) => setTargetValue(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Current</label>
+                    <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase">
+                      Current
+                    </label>
                     <input
                       type="number"
                       value={currentValue}
                       onChange={(e) => setCurrentValue(Number(e.target.value))}
-                      className="w-full px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Unit</label>
+                    <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase">
+                      Unit
+                    </label>
                     <input
                       type="text"
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
                       placeholder="e.g. books, USD, km"
-                      className="w-full px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50 font-sans"
                     />
                   </div>
                 </div>
               )}
 
               {archetype === "habit" && (
-                <div className="grid grid-cols-2 gap-2 bg-black/40 p-3 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-2 gap-2 bg-[#06070B] p-3 rounded-2xl border border-white/10">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Streak Goal (Days)</label>
+                    <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase">
+                      Streak Goal (Days)
+                    </label>
                     <input
                       type="number"
                       value={targetValue}
                       onChange={(e) => setTargetValue(Number(e.target.value))}
                       placeholder="30"
-                      className="w-full px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Frequency</label>
+                    <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase">
+                      Frequency
+                    </label>
                     <select
                       value={frequency}
                       onChange={(e) => setFrequency(e.target.value as any)}
-                      className="w-full px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                      className="w-full px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     >
                       <option value="daily">Every Day</option>
                       <option value="weekly">Weekly Target</option>
@@ -448,16 +457,21 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
               )}
 
               {archetype === "milestone" && (
-                <div className="space-y-2 bg-black/40 p-3 rounded-2xl border border-white/5">
-                  <label className="block text-xs font-semibold text-slate-400">Project Milestone Phases</label>
+                <div className="space-y-2 bg-[#06070B] p-3 rounded-2xl border border-white/10">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase">
+                    Project Milestone Phases
+                  </label>
                   <div className="space-y-1.5 max-h-36 overflow-y-auto">
                     {milestones.map((m) => (
-                      <div key={m.id} className="flex items-center justify-between bg-[#141414] px-2.5 py-1.5 rounded-lg border border-white/5 text-xs">
-                        <span className="font-medium text-slate-200">{m.title}</span>
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between bg-white/[0.02] px-2.5 py-1.5 rounded-lg border border-white/10 text-xs"
+                      >
+                        <span className="font-medium text-slate-200 font-sans">{m.title}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveMilestone(m.id)}
-                          className="text-slate-500 hover:text-red-400"
+                          className="text-slate-500 hover:text-red-400 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -470,12 +484,12 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
                       value={newMilestoneTitle}
                       onChange={(e) => setNewMilestoneTitle(e.target.value)}
                       placeholder="Add another phase..."
-                      className="flex-1 px-2.5 py-1.5 bg-[#141414] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                      className="flex-1 px-2.5 py-1.5 bg-black/60 border border-white/15 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 font-sans"
                     />
                     <button
                       type="button"
                       onClick={handleAddMilestone}
-                      className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-lg text-xs font-bold"
+                      className="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-black rounded-lg text-xs font-bold cursor-pointer"
                     >
                       Add
                     </button>
@@ -486,11 +500,13 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
               {/* Category and Scheduled Time */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Life Sphere</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">
+                    Life Sphere
+                  </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as Category)}
-                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-3 py-2 bg-[#06070B] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -500,38 +516,49 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Scheduled Time</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">
+                    Scheduled Time
+                  </label>
                   <input
                     type="time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  />
+                    className="w-full px-3 py-2 bg-[#06070B] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                  </input>
                 </div>
               </div>
 
               {/* Color & Icon picker */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Theme Color</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">
+                    Beacon Color
+                  </label>
                   <div className="flex space-x-1.5">
                     {COLORS.map((c) => (
                       <button
                         key={c}
                         type="button"
                         onClick={() => setColor(c)}
-                        className={`w-6 h-6 rounded-full transition ${color === c ? "ring-2 ring-offset-2 ring-offset-[#141414] ring-emerald-400 scale-110" : ""}`}
+                        className={`w-5 h-5 rounded-full transition cursor-pointer ${
+                          color === c
+                            ? "ring-2 ring-offset-2 ring-offset-[#06070B] ring-emerald-400 scale-110 relative z-10"
+                            : "relative z-0"
+                        }`}
                         style={{ backgroundColor: c }}
                       />
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Icon Symbol</label>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">
+                    Icon Symbol
+                  </label>
                   <select
                     value={icon}
                     onChange={(e) => setIcon(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full px-2.5 py-1.5 bg-[#06070B] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50"
                   >
                     {ICONS.map((ic) => (
                       <option key={ic} value={ic}>
@@ -546,15 +573,15 @@ export const CreateEndeavorModal: React.FC<CreateEndeavorModalProps> = ({
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-black rounded-xl font-bold text-sm shadow-xs transition"
+                  className="w-full py-3 bg-emerald-400 hover:bg-emerald-300 active:scale-98 text-black rounded-xl font-bold text-xs uppercase shadow-[0_0_20px_rgba(52,211,153,0.35)] transition cursor-pointer"
                 >
-                  Create & Start Tracking
+                  Initiate Orbit Telemetry
                 </button>
               </div>
             </form>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

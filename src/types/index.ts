@@ -89,6 +89,7 @@ export interface Badge {
 
 export type ViewTab =
   | "tracker"
+  | "sandbox"
   | "matrix"
   | "roadmap"
   | "timeline"
@@ -98,7 +99,48 @@ export type ViewTab =
   | "copilot"
   | "settings";
 
-export type CardLayoutMode = "grid" | "board" | "list";
+export type CardLayoutMode = "curated" | "grid" | "board" | "list" | "sandbox";
+
+export interface SandboxStickyNote {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string; // Hex or tailwind color
+  tag?: string;
+  width?: number;
+  height?: number;
+  pinned?: boolean;
+}
+
+export interface SandboxConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  label?: string;
+  color?: string;
+  style?: "solid" | "dashed" | "glow";
+}
+
+export interface SandboxNodePosition {
+  id: string;
+  x: number;
+  y: number;
+  vx?: number;
+  vy?: number;
+  fixed?: boolean;
+}
+
+export interface SandboxSettings {
+  gravityEnabled: boolean;
+  gravityStrength: number;
+  repulsionStrength: number;
+  orbitCenterPull: boolean;
+  starfieldIntensity: number;
+  showConstellations: boolean;
+  showGrid: boolean;
+  snapToGrid: boolean;
+}
 
 export type ThemeAccent = "emerald" | "violet" | "amber" | "cyan" | "rose" | "slate";
 export type WorkspaceDensity = "compact" | "balanced" | "spacious";

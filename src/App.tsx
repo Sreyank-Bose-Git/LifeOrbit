@@ -1,3 +1,4 @@
+import { focusAudio } from "./lib/audio";
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { EndeavorCard } from "./components/EndeavorCard";
@@ -21,6 +22,11 @@ import { RoadmapView } from "./components/RoadmapView";
 import { TrophiesView } from "./components/TrophiesView";
 import { MiniFocusPlayer } from "./components/MiniFocusPlayer";
 import { OrbitQueueDrawer } from "./components/OrbitQueueDrawer";
+import { BreadcrumbsBar } from "./components/BreadcrumbsBar";
+import { FeaturedBillboardCard } from "./components/FeaturedBillboardCard";
+import { EndeavorRowCarousel } from "./components/EndeavorRowCarousel";
+import { SandboxView } from "./components/SandboxView";
+import { LifeSphereOrb } from "./components/LifeSphereOrb";
 import { storage } from "./lib/storage";
 import { THEME_ACCENTS } from "./lib/theme";
 import {
@@ -46,6 +52,8 @@ import {
   LayoutGrid,
   Kanban,
   List,
+  Tv,
+  Orbit,
   Flame,
   CheckCircle2,
   Clock,
@@ -55,6 +63,8 @@ import {
   Activity,
   Award,
   Calendar,
+  Target,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
@@ -86,8 +96,8 @@ export default function App() {
   // YouTube-Style Right Context Panel (Orbit Queue Drawer)
   const [isOrbitQueueOpen, setIsOrbitQueueOpen] = useState(false);
 
-  // Card Layout Mode: Grid (YouTube Card style), Board (Kanban), List
-  const [cardLayoutMode, setCardLayoutMode] = useState<CardLayoutMode>("grid");
+  // Card Layout Mode: Curated (Netflix/Prime Rails), Grid (YouTube), Board (Kanban), List (Obsidian)
+  const [cardLayoutMode, setCardLayoutMode] = useState<CardLayoutMode>("curated");
 
   // YouTube-Style Horizontal Filter Chips & Presets
   const [filterPreset, setFilterPreset] = useState<string>("all");
@@ -102,12 +112,20 @@ export default function App() {
     isPaused: boolean;
     totalSeconds: number;
     secondsRemaining: number;
+    mode: "pomodoro" | "deep" | "shortBreak";
+    soundMode: "none" | "binaural" | "noise" | "rain";
+    volume: number;
+    sessionNotes: string;
   }>({
     endeavor: null,
     isActive: false,
     isPaused: false,
     totalSeconds: 25 * 60,
     secondsRemaining: 25 * 60,
+    mode: "pomodoro",
+    soundMode: "none",
+    volume: 0.2,
+    sessionNotes: "",
   });
 
   // Modal States
@@ -135,7 +153,14 @@ export default function App() {
   // Load from local-first storage on mount
   const loadData = () => {
     const currentActiveId = storage.getActiveProfileId();
-    const loadedEndeavors = storage.getEndeavors(currentActiveId);
+    const loadedEndeavors = storage.getEndeavors(currentActiveId).map(e => ({
+      ...e,
+      id: e.id || `end-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      history: e.history || {},
+      streakCount: e.streakCount || 0,
+      bestStreak: e.bestStreak || 0,
+      milestones: e.milestones || [],
+    }));
     const loadedLogs = storage.getLogs(currentActiveId);
     const loadedTimeBlocks = storage.getTimeBlocks(currentActiveId);
     const loadedStats = storage.getStats(currentActiveId);
@@ -165,29 +190,30 @@ export default function App() {
     let interval: any = null;
     if (focusTimer.isActive && !focusTimer.isPaused && focusTimer.secondsRemaining > 0) {
       interval = setInterval(() => {
-        setFocusTimer((prev) => {
-          if (prev.secondsRemaining <= 1) {
-            confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
-            if (prev.endeavor) {
-              handleQuickLog(prev.endeavor, 1, "Completed deep focus sprint!");
-            }
-            awardXP(125, "Deep focus sprint achieved!");
-            showToast("Deep focus session completed! +125 XP");
-            return {
-              ...prev,
-              isActive: false,
-              isPaused: false,
-              secondsRemaining: prev.totalSeconds,
-            };
-          }
-          return { ...prev, secondsRemaining: prev.secondsRemaining - 1 };
-        });
+        setFocusTimer((prev) => ({ ...prev, secondsRemaining: prev.secondsRemaining - 1 }));
       }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [focusTimer.isActive, focusTimer.isPaused, focusTimer.secondsRemaining]);
+
+  // Handle Focus Timer Completion
+  useEffect(() => {
+    if (focusTimer.isActive && focusTimer.secondsRemaining === 0) {
+      confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
+      if (focusTimer.endeavor) {
+        const durationMinutes = Math.floor(focusTimer.totalSeconds / 60);
+        handleFinishFocusSession(focusTimer.endeavor.id, durationMinutes, focusTimer.sessionNotes || "Completed deep focus sprint!");
+      }
+      setFocusTimer(prev => ({
+        ...prev,
+        isActive: false,
+        isPaused: false,
+        secondsRemaining: prev.totalSeconds
+      }));
+    }
+  }, [focusTimer.secondsRemaining, focusTimer.isActive]);
 
   // Multi-Profile Switcher Handler (Netflix-style)
   const handleSelectProfile = (profileId: string) => {
@@ -288,7 +314,7 @@ export default function App() {
       if (e.id !== endeavor.id) return e;
 
       let newCurrent = Math.max(0, e.currentValue + value);
-      const currentDayVal = e.history[todayStr] || 0;
+      const currentDayVal = e.history?.[todayStr] || 0;
       const newDayVal = Math.max(0, currentDayVal + value);
 
       // Streak calculation
@@ -393,23 +419,35 @@ export default function App() {
     }
   };
 
-  // Save new or edited endeavor
-  const handleSaveEndeavor = (newEndeavor: Endeavor) => {
-    const exists = endeavors.some((e) => e.id === newEndeavor.id);
+    // Save new or edited endeavor
+  const handleSaveEndeavor = (incoming: any) => {
+    const isNew = !incoming.id;
+    const finalEndeavor: Endeavor = isNew
+      ? {
+          ...incoming,
+          id: `end-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          history: {},
+          streakCount: 0,
+          bestStreak: 0,
+        }
+      : incoming;
+
+    const exists = endeavors.some((e) => e.id === finalEndeavor.id);
     let updated: Endeavor[];
     if (exists) {
-      updated = endeavors.map((e) => (e.id === newEndeavor.id ? newEndeavor : e));
-      showToast(`Updated "${newEndeavor.title}"`);
+      updated = endeavors.map((e) => (e.id === finalEndeavor.id ? finalEndeavor : e));
+      showToast(`Updated "${finalEndeavor.title}"`);
     } else {
-      updated = [newEndeavor, ...endeavors];
-      awardXP(50, `Created endeavor "${newEndeavor.title}"`);
-      showToast(`Created "${newEndeavor.title}"`);
+      updated = [finalEndeavor, ...endeavors];
+      awardXP(50, `Created endeavor "${finalEndeavor.title}"`);
+      showToast(`Created "${finalEndeavor.title}"`);
     }
     setEndeavors(updated);
     storage.saveEndeavors(updated);
-
-    if (selectedEndeavorForDetail && selectedEndeavorForDetail.id === newEndeavor.id) {
-      setSelectedEndeavorForDetail(newEndeavor);
+    if (selectedEndeavorForDetail && selectedEndeavorForDetail.id === finalEndeavor.id) {
+      setSelectedEndeavorForDetail(finalEndeavor);
     }
   };
 
@@ -423,7 +461,7 @@ export default function App() {
 
   // Toggle Date Log in Habit Matrix
   const handleToggleDateLog = (endeavor: Endeavor, dateStr: string) => {
-    const isLogged = (endeavor.history[dateStr] || 0) > 0;
+    const isLogged = (endeavor.history?.[dateStr] || 0) > 0;
     const nextVal = isLogged ? 0 : 1;
     const updatedHistory = { ...endeavor.history, [dateStr]: nextVal };
 
@@ -465,19 +503,22 @@ export default function App() {
   // Start deep focus session on an endeavor
   const handleStartFocus = (endeavor: Endeavor) => {
     setFocusTargetEndeavor(endeavor);
-    setFocusTimer({
+    setFocusTimer((prev) => ({
+      ...prev,
       endeavor,
       isActive: true,
       isPaused: false,
       totalSeconds: 25 * 60,
       secondsRemaining: 25 * 60,
-    });
+      mode: "pomodoro",
+    }));
     setActiveTab("focus");
     showToast(`Focus sprint armed for ${endeavor.title}`);
   };
 
   // Finish focus session
   const handleFinishFocusSession = (endeavorId: string, durationMinutes: number, notes: string) => {
+    focusAudio.stop();
     const matched = endeavors.find((e) => e.id === endeavorId);
     if (matched) {
       handleQuickLog(matched, 1, `Focus session (${durationMinutes}m): ${notes}`);
@@ -558,7 +599,7 @@ export default function App() {
   });
 
   return (
-    <div className="h-screen overflow-hidden bg-[#0A0A0A] text-slate-100 flex flex-row antialiased selection:bg-emerald-500 selection:text-black relative">
+    <div className="h-screen w-screen overflow-hidden bg-black text-slate-100 flex p-2 sm:p-3 gap-2 sm:gap-3 antialiased selection:bg-emerald-500 selection:text-black relative">
       {/* Dynamic Ambient Background Canvas & Glow */}
       <AmbientBackground
         mode={profile.themeConfig?.ambientBackground || "aurora"}
@@ -581,10 +622,10 @@ export default function App() {
         onOpenProfileHub={() => setIsProfileHubOpen(true)}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 h-screen overflow-y-auto flex flex-col min-w-0 relative z-10 focus:outline-none">
+      {/* Main Content Area (Floating Island) */}
+      <div className="flex-1 bg-[#0A0A0A]/90 backdrop-blur-3xl sm:rounded-[32px] rounded-2xl border border-white/5 h-full overflow-y-auto flex flex-col min-w-0 relative z-10 focus:outline-none shadow-[0_0_80px_rgba(0,0,0,0.8)] ring-1 ring-white/5">
         {/* Mobile Header Bar */}
-        <header className="md:hidden sticky top-0 z-30 bg-[#0D0D0D]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
+        <header className="md:hidden sticky top-0 z-30 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center space-x-3">
             <button
               onClick={handleToggleSidebar}
@@ -636,20 +677,37 @@ export default function App() {
         <AnimatePresence>
           {toastMessage && (
             <motion.div
+              key="toast-message-global"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="fixed top-6 right-6 z-50 bg-[#141414]/95 backdrop-blur-md text-slate-200 px-4 py-2.5 rounded-2xl shadow-2xl border border-white/10 text-xs font-semibold flex items-center space-x-2"
+              className="fixed top-6 right-6 z-50 bg-white/[0.04]/95 backdrop-blur-md text-slate-200 px-4 py-2.5 rounded-2xl shadow-2xl border border-white/10 text-xs font-semibold flex items-center space-x-2"
             >
               <Zap className={`w-4 h-4 ${currentTheme.textAccent} fill-current`} />
               <span>{toastMessage}</span>
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Notion/Obsidian Breadcrumbs Navigation & System Telemetry Bar */}
+        <BreadcrumbsBar
+          activeTab={activeTab}
+          selectedCategory={selectedCategory}
+          profile={profile}
+          stats={stats}
+          isOrbitQueueOpen={isOrbitQueueOpen}
+          onToggleOrbitQueue={() => setIsOrbitQueueOpen((prev) => !prev)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenProfileHub={() => setIsProfileHubOpen(true)}
+          onNavigateTab={(tab) => {
+            focusAudio.playClick();
+            setActiveTab(tab);
+          }}
+        />
 
         {/* Content Container */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+        <main className="flex-1 w-full max-w-[1400px] mx-auto px-5 sm:px-10 py-8 sm:py-12 space-y-8">
           <AnimatePresence mode="wait">
             {/* VIEW 1: UNIVERSAL TRACKER (Macro Overview & YouTube-Style Feed) */}
             {activeTab === "tracker" && (
@@ -661,6 +719,48 @@ export default function App() {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
+                {/* Stylized Celestial Life Spheres Orbit Bar */}
+                <div className="flex items-center space-x-4 sm:space-x-5 overflow-x-auto pb-3 pt-1 scrollbar-none">
+                  <LifeSphereOrb
+                    sphereId="all"
+                    isSelected={selectedCategory === "all"}
+                    count={endeavors.length}
+                    size="md"
+                    onClick={() => {
+                      focusAudio.playClick();
+                      setSelectedCategory("all");
+                    }}
+                  />
+
+                  {(
+                    [
+                      "health",
+                      "career",
+                      "learning",
+                      "finance",
+                      "mindfulness",
+                      "creative",
+                      "personal",
+                    ] as const
+                  ).map((sphereId) => {
+                    const isSelected = selectedCategory === sphereId;
+                    const count = endeavors.filter((e) => e.category === sphereId).length;
+                    return (
+                      <LifeSphereOrb
+                        key={sphereId}
+                        sphereId={sphereId}
+                        isSelected={isSelected}
+                        count={count}
+                        size="md"
+                        onClick={() => {
+                          focusAudio.playClick();
+                          setSelectedCategory(isSelected ? "all" : sphereId);
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
                 {/* Daily Routine & Momentum Briefing Hero */}
                 <DailyBriefingWidget
                   profile={profile}
@@ -694,7 +794,7 @@ export default function App() {
                       className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer active:scale-95 transition-all duration-150 ${
                         isOrbitQueueOpen
                           ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
-                          : "bg-[#141414] hover:bg-white/10 text-slate-300 hover:text-white border-white/5 hover:border-white/15"
+                          : "bg-white/[0.04] hover:bg-white/10 text-slate-300 hover:text-white border-white/5 hover:border-white/15"
                       }`}
                       title="Toggle Today's Orbit Queue (Cmd+J)"
                     >
@@ -704,7 +804,7 @@ export default function App() {
 
                     <button
                       onClick={() => setIsProfileHubOpen(true)}
-                      className="flex items-center space-x-2 px-3 py-2 bg-[#141414] hover:bg-white/10 text-slate-200 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150 group"
+                      className="flex items-center space-x-2 px-3 py-2 bg-white/[0.04] hover:bg-white/10 text-slate-200 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150 group"
                       title="Switch workspace / account profile (Netflix style)"
                     >
                       <span className="text-base group-hover:scale-110 transition-transform">{profile.avatarIcon || "🚀"}</span>
@@ -714,7 +814,7 @@ export default function App() {
 
                     <button
                       onClick={() => setIsCommandPaletteOpen(true)}
-                      className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-[#141414] hover:bg-white/10 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150"
+                      className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-white/[0.04] hover:bg-white/10 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150"
                     >
                       <Command className="w-3.5 h-3.5 text-slate-400" />
                       <span>Cmd+K</span>
@@ -722,7 +822,7 @@ export default function App() {
 
                     <button
                       onClick={() => setActiveTab("copilot")}
-                      className="flex items-center space-x-2 px-3.5 py-2 bg-[#141414] hover:bg-white/10 text-slate-200 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150"
+                      className="flex items-center space-x-2 px-3.5 py-2 bg-white/[0.04] hover:bg-white/10 text-slate-200 hover:text-white rounded-xl text-xs font-semibold border border-white/5 hover:border-white/15 cursor-pointer active:scale-95 transition-all duration-150"
                     >
                       <Sparkles className={`w-3.5 h-3.5 ${currentTheme.textAccent}`} />
                       <span>AI Coach</span>
@@ -739,7 +839,7 @@ export default function App() {
                 </div>
 
                 {/* YouTube-Style Filter Ribbon & View Controls */}
-                <div className="bg-[#0D0D0D] rounded-2xl p-3 sm:p-4 border border-white/5 space-y-3">
+                <div className="bg-white/[0.02] rounded-2xl p-3 sm:p-4 border border-white/5 space-y-3">
                   {/* Row 1: YouTube-Style Horizontal Filter Chips */}
                   <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none text-xs">
                     {[
@@ -759,7 +859,7 @@ export default function App() {
                       <button
                         key={chip.id}
                         onClick={() => setFilterPreset(chip.id)}
-                        className={`px-3.5 py-1.5 rounded-xl font-semibold cursor-pointer active:scale-95 transition-all duration-150 shrink-0 ${
+                        className={`px-3.5 py-1.5 rounded-xl font-semibold cursor-pointer active:scale-95 transition-all duration-150 shrink-0 relative z-0 hover:z-10 ${
                           filterPreset === chip.id
                             ? "bg-white/20 text-white shadow-xs border border-white/20"
                             : "bg-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10"
@@ -772,20 +872,63 @@ export default function App() {
 
                   {/* Row 2: Search, Type, and View Switcher (Grid / Board / List) */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1 border-t border-white/5">
-                    {/* Search Field */}
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+                    {/* Search Field with Quick Wizard Launcher */}
+                    <div className="relative flex-1 max-w-md flex items-center">
+                      <Search className="w-3.5 h-3.5 text-emerald-400 absolute left-3 top-2.5 pointer-events-none" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search endeavors, meters, habits..."
-                        className="w-full pl-8 pr-3 py-1.5 bg-[#141414] border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        placeholder="Quick filter inline or press ⌘K for Search Wizard..."
+                        className="w-full pl-8 pr-16 py-1.5 bg-white/[0.04] border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors font-sans"
                       />
+                      <div className="absolute right-2 flex items-center space-x-1">
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery("")}
+                            className="text-slate-400 hover:text-white p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setIsCommandPaletteOpen(true)}
+                          className="px-1.5 py-0.5 bg-white/10 hover:bg-white/20 text-slate-300 text-[10px] font-mono rounded border border-white/10 transition cursor-pointer"
+                          title="Open Cosmic Search Wizard (Cmd+K)"
+                        >
+                          ⌘K
+                        </button>
+                      </div>
                     </div>
 
-                    {/* View Mode Switcher (YouTube Grid vs Kanban Board vs Dense List) */}
-                    <div className="flex items-center space-x-1.5 self-end sm:self-center bg-[#141414] p-1 rounded-xl border border-white/5">
+                    {/* View Mode Switcher (Curated Netflix Rails vs YouTube Grid vs Kanban Board vs Dense List vs Sandbox) */}
+                    <div className="flex items-center space-x-1.5 self-end sm:self-center bg-white/[0.04] p-1 rounded-xl border border-white/5">
+                      <button
+                        onClick={() => setCardLayoutMode("curated")}
+                        className={`p-1.5 rounded-lg text-xs font-semibold cursor-pointer transition flex items-center space-x-1.5 ${
+                          cardLayoutMode === "curated"
+                            ? "bg-white/15 text-white shadow-xs"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                        title="Netflix/Prime Curated Horizons View"
+                      >
+                        <Tv className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-[11px] hidden sm:inline">Curated</span>
+                      </button>
+
+                      <button
+                        onClick={() => setCardLayoutMode("sandbox")}
+                        className={`p-1.5 rounded-lg text-xs font-semibold cursor-pointer transition flex items-center space-x-1.5 ${
+                          cardLayoutMode === "sandbox"
+                            ? "bg-white/15 text-white shadow-xs"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                        title="Cosmic Sandbox Physics Canvas"
+                      >
+                        <Orbit className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="text-[11px] hidden sm:inline">Sandbox</span>
+                      </button>
+
                       <button
                         onClick={() => setCardLayoutMode("grid")}
                         className={`p-1.5 rounded-lg text-xs font-semibold cursor-pointer transition flex items-center space-x-1.5 ${
@@ -830,7 +973,7 @@ export default function App() {
 
                 {/* Endeavors Content Display */}
                 {filteredEndeavors.length === 0 ? (
-                  <div className="bg-[#0D0D0D] rounded-3xl p-12 text-center border border-white/5">
+                  <div className="bg-white/[0.02] rounded-3xl p-12 text-center border border-white/5">
                     <Layers className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                     <h3 className="text-sm font-bold text-slate-300">No endeavors match your current filter</h3>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
@@ -844,11 +987,209 @@ export default function App() {
                       <span>Create Endeavor</span>
                     </button>
                   </div>
+                ) : cardLayoutMode === "sandbox" ? (
+                  /* COSMIC SANDBOX CANVAS VIEW */
+                  <SandboxView
+                    endeavors={filteredEndeavors}
+                    profile={profile}
+                    stats={stats}
+                    onQuickLog={handleQuickLog}
+                    onOpenLogModal={(e) => {
+                      setSelectedEndeavorForLog(e);
+                      setIsLogModalOpen(true);
+                    }}
+                    onStartFocus={handleStartFocus}
+                    onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                    onOpenCreate={() => setIsCreateModalOpen(true)}
+                  />
+                ) : cardLayoutMode === "curated" ? (
+                  /* NETFLIX / PRIME VIDEO CURATED RAILS VIEW */
+                  <div className="space-y-10">
+                    {/* Featured Billboard Spotlight */}
+                    <FeaturedBillboardCard
+                      endeavors={filteredEndeavors}
+                      onQuickLog={handleQuickLog}
+                      onStartFocus={handleStartFocus}
+                      onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                    />
+
+                    {/* Curated Rails */}
+                    {searchQuery.trim() === "" && filterPreset === "all" && selectedCategory === "all" ? (
+                      <div className="space-y-8">
+                        {/* 1. In Active Flight */}
+                        <EndeavorRowCarousel
+                          title="In Active Flight"
+                          subtitle="Endeavors actively in motion across your key horizons"
+                          icon={Layers}
+                          badge="ACTIVE ORBIT"
+                          endeavors={endeavors.filter((e) => e.status === "active" && e.currentValue > 0 && e.currentValue < e.targetValue)}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+
+                        {/* 2. Streak Leaders */}
+                        <EndeavorRowCarousel
+                          title="Streak Leaders & High Momentum"
+                          subtitle="Daily consistency compounding into exponential growth"
+                          icon={Flame}
+                          badge="HOT STREAKS"
+                          badgeColor="text-amber-300 bg-amber-500/10 border-amber-500/20"
+                          endeavors={endeavors.filter((e) => e.streakCount > 0)}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+
+                        {/* 3. Daily Rituals */}
+                        <EndeavorRowCarousel
+                          title="Daily Rituals & Check-ins"
+                          subtitle="High-frequency habits designed for daily execution"
+                          icon={CheckCircle2}
+                          badge="DAILY RITUALS"
+                          badgeColor="text-cyan-300 bg-cyan-500/10 border-cyan-500/20"
+                          endeavors={endeavors.filter((e) => e.archetype === "habit")}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+
+                        {/* 4. Milestone Projects */}
+                        <EndeavorRowCarousel
+                          title="Milestone Horizons & Projects"
+                          subtitle="Multi-phase goals with strategic roadmap checkpoints"
+                          icon={Flag}
+                          badge="PROJECT ROADMAP"
+                          badgeColor="text-purple-300 bg-purple-500/10 border-purple-500/20"
+                          endeavors={endeavors.filter((e) => e.archetype === "milestone")}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+
+                        {/* 5. Target Progress Meters */}
+                        <EndeavorRowCarousel
+                          title="Target Progress Meters"
+                          subtitle="Quantitative targets with precision numerical tracking"
+                          icon={Target}
+                          badge="METRICS"
+                          badgeColor="text-emerald-300 bg-emerald-500/10 border-emerald-500/20"
+                          endeavors={endeavors.filter((e) => e.archetype === "meter")}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+
+                        {/* 6. Mastered Horizons */}
+                        <EndeavorRowCarousel
+                          title="Mastered Horizons & Trophies"
+                          subtitle="Completed missions and conquered milestones"
+                          icon={Award}
+                          badge="ACCOMPLISHED"
+                          badgeColor="text-yellow-300 bg-yellow-500/10 border-yellow-500/20"
+                          endeavors={endeavors.filter((e) => e.status === "completed" || e.currentValue >= e.targetValue)}
+                          onQuickLog={handleQuickLog}
+                          onOpenLogModal={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onToggleMilestone={handleToggleMilestone}
+                          onStartFocus={handleStartFocus}
+                          onEdit={(e) => {
+                            setSelectedEndeavorForLog(e);
+                            setIsLogModalOpen(true);
+                          }}
+                          onDelete={handleDeleteEndeavor}
+                          onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                        />
+                      </div>
+                    ) : (
+                      /* Filtered Curated Grid */
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/5 font-mono">
+                          <span className="text-xs text-slate-400">
+                            SHOWING {filteredEndeavors.length} MATCHING HORIZONS
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+                          {filteredEndeavors.map((endeavor) => (
+                            <EndeavorCard
+                              key={endeavor.id}
+                              endeavor={endeavor}
+                              onQuickLog={handleQuickLog}
+                              onOpenLogModal={(e) => {
+                                setSelectedEndeavorForLog(e);
+                                setIsLogModalOpen(true);
+                              }}
+                              onToggleMilestone={handleToggleMilestone}
+                              onStartFocus={handleStartFocus}
+                              onEdit={(e) => {
+                                setSelectedEndeavorForLog(e);
+                                setIsLogModalOpen(true);
+                              }}
+                              onDelete={handleDeleteEndeavor}
+                              onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : cardLayoutMode === "board" ? (
                   /* KANBAN BOARD VIEW */
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {/* Column 1: Backlog & Planned */}
-                    <div className="bg-[#0D0D0D] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
+                    <div className="bg-white/[0.02] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
                       <div className="flex items-center justify-between pb-2 border-b border-white/5">
                         <div className="flex items-center space-x-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
@@ -887,7 +1228,7 @@ export default function App() {
                     </div>
 
                     {/* Column 2: In Active Progress */}
-                    <div className="bg-[#0D0D0D] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
+                    <div className="bg-white/[0.02] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
                       <div className="flex items-center justify-between pb-2 border-b border-white/5">
                         <div className="flex items-center space-x-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -926,7 +1267,7 @@ export default function App() {
                     </div>
 
                     {/* Column 3: Completed & Mastered */}
-                    <div className="bg-[#0D0D0D] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
+                    <div className="bg-white/[0.02] rounded-3xl p-4 sm:p-5 border border-white/5 space-y-3 flex flex-col">
                       <div className="flex items-center justify-between pb-2 border-b border-white/5">
                         <div className="flex items-center space-x-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
@@ -966,7 +1307,7 @@ export default function App() {
                   </div>
                 ) : cardLayoutMode === "list" ? (
                   /* DENSE LIST VIEW */
-                  <div className="bg-[#0D0D0D] rounded-3xl border border-white/5 overflow-hidden shadow-xl divide-y divide-white/5">
+                  <div className="bg-white/[0.02] rounded-3xl border border-white/5 overflow-hidden shadow-xl divide-y divide-white/5">
                     {filteredEndeavors.map((endeavor) => {
                       const color = endeavor.color || "#10b981";
                       const pct = endeavor.archetype === "milestone"
@@ -1062,6 +1403,51 @@ export default function App() {
               </motion.div>
             )}
 
+            {/* VIEW 1.5: COSMIC SANDBOX VIEW (Spatial Physics Canvas & Constellation Playground) */}
+            {activeTab === "sandbox" && (
+              <motion.div
+                key="tab-sandbox"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center space-x-2.5">
+                      <Orbit className="w-7 h-7 text-emerald-400" />
+                      <span>Cosmic Sandbox & Physics Playground</span>
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                      Freeform spatial canvas with real-time orbital gravity, celestial constellations, and cosmic sticky thoughts.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-bold text-xs uppercase shadow-[0_0_20px_rgba(52,211,153,0.3)] active:scale-95 transition cursor-pointer self-start sm:self-auto"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>Create Orbit Node</span>
+                  </button>
+                </div>
+
+                <SandboxView
+                  endeavors={endeavors}
+                  profile={profile}
+                  stats={stats}
+                  onQuickLog={handleQuickLog}
+                  onOpenLogModal={(e) => {
+                    setSelectedEndeavorForLog(e);
+                    setIsLogModalOpen(true);
+                  }}
+                  onStartFocus={handleStartFocus}
+                  onOpenDetail={(e) => setSelectedEndeavorForDetail(e)}
+                  onOpenCreate={() => setIsCreateModalOpen(true)}
+                />
+              </motion.div>
+            )}
+
             {/* VIEW 2: HABIT MATRIX VIEW (YouTube/GitHub Consistency Matrix) */}
             {activeTab === "matrix" && (
               <motion.div
@@ -1137,7 +1523,8 @@ export default function App() {
               >
                 <FocusMode
                   endeavors={endeavors}
-                  initialEndeavor={focusTargetEndeavor}
+                  focusTimer={focusTimer}
+                  setFocusTimer={setFocusTimer}
                   onFinishSession={handleFinishFocusSession}
                 />
               </motion.div>
@@ -1232,7 +1619,7 @@ export default function App() {
             }))
           }
           onMaximize={() => setActiveTab("focus")}
-          onComplete={() => {
+                    onComplete={() => {
             confetti({ particleCount: 80, spread: 70 });
             if (focusTimer.endeavor) {
               handleQuickLog(focusTimer.endeavor, 1, "Completed sprint via mini-player");
@@ -1243,15 +1630,19 @@ export default function App() {
               isActive: false,
               isPaused: false,
               secondsRemaining: prev.totalSeconds,
+              soundMode: "none"
             }));
+            focusAudio.stop();
           }}
-          onClose={() =>
+          onClose={() => {
             setFocusTimer((prev) => ({
               ...prev,
               isActive: false,
               isPaused: false,
-            }))
-          }
+              soundMode: "none"
+            }));
+            focusAudio.stop();
+          }}
         />
       )}
 
@@ -1294,6 +1685,11 @@ export default function App() {
           if (target) handleQuickLog(target, 1);
         }}
         onOpenProfileHub={() => setIsProfileHubOpen(true)}
+        onOpenDetail={(endeavor) => setSelectedEndeavorForDetail(endeavor)}
+        onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+        onOpenBackup={() => setIsBackupModalOpen(true)}
+        onOpenDeviceSync={() => setIsIntegrationsModalOpen(true)}
+        onToggleOrbitQueue={() => setIsOrbitQueueOpen((prev) => !prev)}
       />
 
       <EndeavorDetailModal

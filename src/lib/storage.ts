@@ -613,7 +613,17 @@ export const storage = {
         localStorage.setItem(key, JSON.stringify(initial));
         return initial;
       }
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed.map((e: any) => ({
+          ...e,
+          history: e.history || {},
+          streakCount: e.streakCount || 0,
+          bestStreak: e.bestStreak || 0,
+          milestones: e.milestones || []
+        }));
+      }
+      return parsed;
     } catch {
       return INITIAL_ENDEAVORS_WORK;
     }

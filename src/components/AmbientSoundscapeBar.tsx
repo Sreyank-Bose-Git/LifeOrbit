@@ -148,7 +148,7 @@ export const AmbientSoundscapeBar: React.FC<AmbientSoundscapeBarProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-3 bg-[#0D0D0D]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-2xl space-y-4"
+            className="mb-3 bg-white/[0.02]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-2xl space-y-4"
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -200,7 +200,7 @@ export const AmbientSoundscapeBar: React.FC<AmbientSoundscapeBarProps> = ({
                     className={`p-3 rounded-2xl text-left border cursor-pointer active:scale-95 transition-all flex flex-col justify-between space-y-1 relative group ${
                       isSelected
                         ? "bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg shadow-emerald-500/10"
-                        : "bg-[#141414] hover:bg-white/10 border-white/5 text-slate-300 hover:text-white"
+                        : "bg-white/[0.04] hover:bg-white/10 border-white/5 text-slate-300 hover:text-white"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -275,7 +275,7 @@ export const AmbientSoundscapeBar: React.FC<AmbientSoundscapeBarProps> = ({
       {/* Floating Pill Mini-Bar */}
       <motion.div
         layout
-        className="bg-[#0D0D0D]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2.5 shadow-2xl flex items-center justify-between gap-3 text-xs"
+        className="bg-white/[0.02]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2.5 shadow-2xl flex items-center justify-between gap-3 text-xs"
       >
         {/* Play/Pause Button */}
         <button

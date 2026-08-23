@@ -101,7 +101,7 @@ export const CinematicIntroLogo: React.FC<CinematicIntroLogoProps> = ({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: [0, 1.2, 1], opacity: 1 }}
             transition={{ duration: 0.8, ease: "backOut" }}
-            className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-[#0D0D0D] border border-white/20 shadow-2xl flex items-center justify-center backdrop-blur-xl overflow-hidden group"
+            className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-white/[0.02] border border-white/20 shadow-2xl flex items-center justify-center backdrop-blur-xl overflow-hidden group"
           >
             {/* Shimmer light pass */}
             <motion.div

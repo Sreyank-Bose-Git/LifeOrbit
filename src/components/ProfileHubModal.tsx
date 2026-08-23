@@ -161,7 +161,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.94 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="w-full max-w-4xl bg-[#0D0D0D] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden"
+        className="w-full max-w-4xl bg-white/[0.02] border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden"
       >
         {/* Ambient Top Glow in modal */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
@@ -285,7 +285,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                 className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition cursor-pointer active:scale-95 flex items-center space-x-2 ${
                   isManaging
                     ? "bg-white text-black border-white shadow-lg"
-                    : "bg-[#141414] hover:bg-white/10 text-slate-300 border-white/10"
+                    : "bg-white/[0.04] hover:bg-white/10 text-slate-300 border-white/10"
                 }`}
               >
                 <Sliders className="w-4 h-4" />
@@ -329,7 +329,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Left Column: Avatar & Colors */}
-              <div className="space-y-4 bg-[#141414] p-4 sm:p-5 rounded-2xl border border-white/5">
+              <div className="space-y-4 bg-white/[0.04] p-4 sm:p-5 rounded-2xl border border-white/5">
                 <label className="text-xs font-bold text-slate-300 block">Choose Avatar Icon</label>
                 <div className="grid grid-cols-8 gap-2">
                   {AVATAR_PRESETS.map((emoji) => (
@@ -387,7 +387,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
               </div>
 
               {/* Right Column: Name & Details */}
-              <div className="space-y-4 bg-[#141414] p-4 sm:p-5 rounded-2xl border border-white/5">
+              <div className="space-y-4 bg-white/[0.04] p-4 sm:p-5 rounded-2xl border border-white/5">
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1">Space Name *</label>
                   <input
@@ -396,7 +396,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     placeholder="e.g. Marathon Training / Design Studio / Family"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
                   />
                 </div>
 
@@ -407,7 +407,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     placeholder="e.g. Endurance Athlete / Lead Architect"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
                   />
                 </div>
 
@@ -418,7 +418,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     placeholder="e.g. Unrelenting discipline creates limitless freedom."
                     value={newMotto}
                     onChange={(e) => setNewMotto(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
                   />
                 </div>
 
@@ -482,7 +482,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Left Column: Avatar & Colors */}
-              <div className="space-y-4 bg-[#141414] p-4 sm:p-5 rounded-2xl border border-white/5">
+              <div className="space-y-4 bg-white/[0.04] p-4 sm:p-5 rounded-2xl border border-white/5">
                 <label className="text-xs font-bold text-slate-300 block">Avatar Icon</label>
                 <div className="grid grid-cols-8 gap-2">
                   {AVATAR_PRESETS.map((emoji) => (
@@ -540,7 +540,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
               </div>
 
               {/* Right Column: Name & Details */}
-              <div className="space-y-4 bg-[#141414] p-4 sm:p-5 rounded-2xl border border-white/5">
+              <div className="space-y-4 bg-white/[0.04] p-4 sm:p-5 rounded-2xl border border-white/5">
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1">Name</label>
                   <input
@@ -548,7 +548,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
                   />
                 </div>
 
@@ -558,7 +558,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     type="text"
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
                   />
                 </div>
 
@@ -568,7 +568,7 @@ export const ProfileHubModal: React.FC<ProfileHubModalProps> = ({
                     type="text"
                     value={editMotto}
                     onChange={(e) => setEditMotto(e.target.value)}
-                    className="w-full bg-[#0D0D0D] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                    className="w-full bg-white/[0.02] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
                   />
                 </div>
 

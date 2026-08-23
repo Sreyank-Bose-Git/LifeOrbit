@@ -11,6 +11,7 @@ import {
   Lock,
   CheckCircle,
   TrendingUp,
+  Orbit,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { UserStats, UserProfile, Endeavor } from "../types";
@@ -34,7 +35,10 @@ export const TrophiesView: React.FC<TrophiesViewProps> = ({
   const currentXp = stats.xp || 0;
   const xpIntoCurrentLevel = currentXp % 500;
   const xpRequiredForNextLevel = 500;
-  const levelProgressPct = Math.min(100, Math.round((xpIntoCurrentLevel / xpRequiredForNextLevel) * 100));
+  const levelProgressPct = Math.min(
+    100,
+    Math.round((xpIntoCurrentLevel / xpRequiredForNextLevel) * 100)
+  );
 
   // Determine user rank title
   const getRankTitle = (lvl: number) => {
@@ -47,7 +51,10 @@ export const TrophiesView: React.FC<TrophiesViewProps> = ({
   };
 
   // Best streak
-  const bestStreakEver = endeavors.reduce((max, e) => Math.max(max, e.bestStreak || e.streakCount || 0), 0);
+  const bestStreakEver = endeavors.reduce(
+    (max, e) => Math.max(max, e.bestStreak || e.streakCount || 0),
+    0
+  );
 
   // All unlockable badges catalog
   const achievements = [
@@ -105,37 +112,47 @@ export const TrophiesView: React.FC<TrophiesViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Rank & Level Banner */}
-      <div className="bg-[#0D0D0D] rounded-3xl p-6 sm:p-8 border border-white/5 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-center space-x-5">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-linear-to-tr from-amber-500/20 to-yellow-500/10 border border-amber-500/30 flex items-center justify-center text-3xl sm:text-4xl shadow-xl shrink-0">
+      {/* Rank & Level Banner - Interstellar Hall of Fame */}
+      <div className="relative bg-[#06070B]/90 md:bg-[#06070B]/75 backdrop-blur-3xl rounded-[28px] sm:rounded-[32px] p-6 sm:p-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.12)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
+        {/* Ambient Cosmic Mesh */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full blur-3xl opacity-20 bg-amber-500/30" />
+          <div className="absolute top-1/2 -right-20 w-56 h-56 rounded-full blur-3xl opacity-15 bg-yellow-500/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.1)_1px,transparent_1px)] [background-size:18px_18px] opacity-25" />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+        </div>
+
+        <div className="relative z-10 flex items-center space-x-5">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-linear-to-tr from-amber-500/20 to-yellow-500/10 border border-amber-500/40 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_0_25px_rgba(251,191,36,0.3)] shrink-0">
             👑
           </div>
           <div>
-            <div className="flex items-center space-x-2 text-amber-400 mb-1">
+            <div className="flex items-center space-x-2 text-amber-400 mb-1 font-mono">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">{getRankTitle(currentLevel)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                {getRankTitle(currentLevel)} // SEC-07
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight uppercase">
               Level {currentLevel} • {profile.name}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 font-normal">
               {currentXp} Total XP Earned • {unlockedCount} of {achievements.length} Trophies Unlocked
             </p>
           </div>
         </div>
 
         {/* Level Progression Card */}
-        <div className="w-full md:w-72 bg-[#141414] p-4 rounded-2xl border border-white/5 space-y-2">
+        <div className="relative z-10 w-full md:w-72 bg-[#06070B] p-4 rounded-2xl border border-white/15 space-y-2 font-mono shadow-[0_0_20px_rgba(0,0,0,0.5)]">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-300">Level {currentLevel}</span>
-            <span className="text-amber-400 font-extrabold font-mono">
+            <span className="font-bold text-slate-300">LEVEL {currentLevel}</span>
+            <span className="text-amber-400 font-extrabold">
               {xpIntoCurrentLevel} / {xpRequiredForNextLevel} XP
             </span>
           </div>
-          <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5">
             <div
-              className="h-full bg-linear-to-r from-amber-500 to-yellow-400 transition-all duration-500 rounded-full"
+              className="h-full bg-linear-to-r from-amber-500 to-yellow-400 transition-all duration-500 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)]"
               style={{ width: `${levelProgressPct}%` }}
             />
           </div>
@@ -146,59 +163,68 @@ export const TrophiesView: React.FC<TrophiesViewProps> = ({
       </div>
 
       {/* High Score Records Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#0D0D0D] p-5 rounded-2xl border border-white/5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400">
-            <Flame className="w-6 h-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+        <div className="bg-[#06070B]/85 backdrop-blur-2xl p-5 rounded-[24px] border border-white/10 shadow-[0_0_25px_rgba(0,0,0,0.5)] flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+            <Flame className="w-6 h-6 fill-amber-400/20" />
           </div>
           <div>
-            <div className="text-2xl font-black text-white">{bestStreakEver} Days</div>
-            <div className="text-xs text-slate-400">Personal Best Streak</div>
+            <div className="text-2xl font-bold text-white">{bestStreakEver} Days</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Personal Best Streak
+            </div>
           </div>
         </div>
 
-        <div className="bg-[#0D0D0D] p-5 rounded-2xl border border-white/5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+        <div className="bg-[#06070B]/85 backdrop-blur-2xl p-5 rounded-[24px] border border-white/10 shadow-[0_0_25px_rgba(0,0,0,0.5)] flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
             <Award className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-white">{stats.totalCheckIns}</div>
-            <div className="text-xs text-slate-400">Lifetime Logs & Check-Ins</div>
+            <div className="text-2xl font-bold text-white">{stats.totalCheckIns}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Lifetime Check-Ins
+            </div>
           </div>
         </div>
 
-        <div className="bg-[#0D0D0D] p-5 rounded-2xl border border-white/5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400">
+        <div className="bg-[#06070B]/85 backdrop-blur-2xl p-5 rounded-[24px] border border-white/10 shadow-[0_0_25px_rgba(0,0,0,0.5)] flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.2)]">
             <Star className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-white">{unlockedCount} / {achievements.length}</div>
-            <div className="text-xs text-slate-400">Trophies Claimed</div>
+            <div className="text-2xl font-bold text-white">
+              {unlockedCount} / {achievements.length}
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Trophies Claimed
+            </div>
           </div>
         </div>
       </div>
 
       {/* Trophy Showcase Grid (YouTube / Gaming Hall of Fame) */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center space-x-2 font-mono">
           <Trophy className="w-4 h-4 text-amber-400" />
-          <span>Orbital Trophies & Achievements</span>
+          <span>ORBITAL TROPHIES & ACHIEVEMENTS</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {achievements.map((achievement) => (
-            <div
+            <motion.div
               key={achievement.id}
-              className={`p-5 rounded-3xl border transition-all duration-200 flex items-start space-x-4 ${
+              whileHover={{ y: -2 }}
+              className={`p-5 rounded-[28px] border transition-all flex items-start space-x-4 ${
                 achievement.unlocked
-                  ? "bg-[#0D0D0D] border-amber-500/30 shadow-lg hover:border-amber-500/50"
-                  : "bg-[#0D0D0D]/50 border-white/5 opacity-60"
+                  ? "bg-[#06070B]/90 backdrop-blur-3xl border-amber-500/30 shadow-[0_0_30px_rgba(251,191,36,0.15)] hover:border-amber-500/50"
+                  : "bg-[#06070B]/70 border-white/5 opacity-50"
               }`}
             >
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${
                   achievement.unlocked
-                    ? "bg-amber-500/20 border border-amber-500/40"
+                    ? "bg-amber-500/20 border border-amber-500/40 shadow-[0_0_15px_rgba(251,191,36,0.3)]"
                     : "bg-white/5 border border-white/10 grayscale"
                 }`}
               >
@@ -207,21 +233,19 @@ export const TrophiesView: React.FC<TrophiesViewProps> = ({
 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-white truncate">
-                    {achievement.name}
-                  </h4>
+                  <h4 className="text-sm font-bold text-white truncate">{achievement.name}</h4>
                   {achievement.unlocked ? (
                     <CheckCircle className="w-4 h-4 text-amber-400 shrink-0" />
                   ) : (
                     <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   )}
                 </div>
-                <p className="text-xs text-slate-400">{achievement.desc}</p>
-                <div className="pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Requirement: {achievement.requirement}
+                <p className="text-xs text-slate-400 font-normal">{achievement.desc}</p>
+                <div className="pt-2 text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                  REQ: {achievement.requirement}
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
