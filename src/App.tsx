@@ -37,6 +37,11 @@ import { RapidHabitBlitzBar } from "./components/RapidHabitBlitzBar";
 import { PublicLandingPage } from "./components/PublicLandingPage";
 import { AuthModal } from "./components/AuthModal";
 import { AccountSettingsModal } from "./components/AccountSettingsModal";
+import { useDevice } from "./lib/useDevice";
+import { MobileBottomNav } from "./components/MobileBottomNav";
+import { MobileTopHeader } from "./components/MobileTopHeader";
+import { DeviceInspectorModal } from "./components/DeviceInspectorModal";
+import { UltrawideTelemetryRail } from "./components/UltrawideTelemetryRail";
 import { onAuthStateChanged, FirebaseUser, signOut, auth } from "./lib/firebase";
 import { syncCloudToLocal, syncLocalToCloud } from "./lib/cloudSync";
 import {
@@ -180,6 +185,10 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
   const [focusTargetEndeavor, setFocusTargetEndeavor] = useState<Endeavor | null>(null);
+
+  // Hardware & Device Detection Engine
+  const { device, setViewOverride, haptic } = useDevice();
+  const [isDeviceInspectorOpen, setIsDeviceInspectorOpen] = useState(false);
 
   // New Detail & Command Palette Modals
   const [selectedEndeavorForDetail, setSelectedEndeavorForDetail] = useState<Endeavor | null>(null);
@@ -880,54 +889,18 @@ export default function App() {
 
       {/* Main Content Area (Floating Island) */}
       <div className="flex-1 bg-[#0A0A0A]/90 backdrop-blur-3xl sm:rounded-[32px] rounded-2xl border border-white/5 h-full overflow-y-auto flex flex-col min-w-0 relative z-10 focus:outline-none shadow-[0_0_80px_rgba(0,0,0,0.8)] ring-1 ring-white/5">
-        {/* Mobile Header Bar */}
-        <header className="md:hidden sticky top-0 z-30 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between rounded-t-2xl">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={handleToggleSidebar}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer active:scale-95 transition"
-              aria-label="Toggle menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="font-bold text-white text-sm uppercase tracking-wider">
-              {profile.themeConfig?.customAppTitle || "LifeOrbit OS"}
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <button
-              onClick={() => setIsOrbitQueueOpen((prev) => !prev)}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer active:scale-95 transition"
-              title="Toggle Today's Queue & Shelf (Cmd+J)"
-            >
-              <PanelRight className="w-4 h-4 text-emerald-400" />
-            </button>
-
-            <button
-              onClick={() => setIsProfileHubOpen(true)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-sm border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer transition active:scale-95"
-              title="Switch Space / Profile"
-            >
-              <span>{profile.avatarIcon || "🚀"}</span>
-            </button>
-
-            <button
-              onClick={() => setIsCommandPaletteOpen(true)}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer active:scale-95 transition"
-              title="Command Palette"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className={`p-2 rounded-xl ${currentTheme.buttonBg} ${currentTheme.buttonText} font-bold shadow-xs active:scale-95`}
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-            </button>
-          </div>
-        </header>
+        {/* Mobile Header Bar - Catering automatically to phone viewport */}
+        <MobileTopHeader
+          activeTab={activeTab}
+          stats={stats}
+          profile={profile}
+          device={device}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenProfileHub={() => setIsProfileHubOpen(true)}
+          onOpenDeviceInspector={() => setIsDeviceInspectorOpen(true)}
+          onOpenLootModal={() => setIsLootModalOpen(true)}
+          onToggleSidebar={handleToggleSidebar}
+        />
 
         {/* Floating Toast Notification */}
         <AnimatePresence>
@@ -946,26 +919,29 @@ export default function App() {
           )}
         </AnimatePresence>
         
-        {/* Notion/Obsidian Breadcrumbs Navigation & System Telemetry Bar */}
+        {/* Notion/Obsidian Breadcrumbs Navigation & System Telemetry Bar (Desktop/Tablet) */}
         <BreadcrumbsBar
           activeTab={activeTab}
           selectedCategory={selectedCategory}
           profile={profile}
           stats={stats}
+          device={device}
           isOrbitQueueOpen={isOrbitQueueOpen}
           onToggleOrbitQueue={() => setIsOrbitQueueOpen((prev) => !prev)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenProfileHub={() => setIsProfileHubOpen(true)}
           onUpdateThemeConfig={handleUpdateThemeConfig}
           onOpenLootModal={() => setIsLootModalOpen(true)}
+          onOpenDeviceInspector={() => setIsDeviceInspectorOpen(true)}
           onNavigateTab={(tab) => {
             focusAudio.playClick();
             setActiveTab(tab);
           }}
         />
 
-        {/* Content Container */}
-        <main className="flex-1 w-full max-w-[1400px] mx-auto px-5 sm:px-10 py-8 sm:py-12 space-y-8">
+        {/* Content Container with Ultrawide Dual-Rail Support */}
+        <div className="flex-1 flex w-full max-w-[1920px] mx-auto min-w-0">
+          <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-10 py-6 sm:py-12 pb-32 sm:pb-12 space-y-8 min-w-0">
           <AnimatePresence mode="wait">
             {/* VIEW 1: UNIVERSAL TRACKER (Macro Overview & YouTube-Style Feed) */}
             {activeTab === "tracker" && (
@@ -1873,16 +1849,33 @@ export default function App() {
                 <SettingsView
                   profile={profile}
                   stats={stats}
+                  device={device}
                   onUpdateProfile={handleSaveProfile}
                   onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
                   onResetDefaults={handleResetDefaults}
                   onOpenProfileHub={() => setIsProfileHubOpen(true)}
+                  onOpenDeviceInspector={() => setIsDeviceInspectorOpen(true)}
                 />
               </motion.div>
             )}
           </AnimatePresence>
         </main>
+
+        {/* Ultrawide Cockpit Telemetry Rail (Visible on >= 1800px or Ultrawide Mode) */}
+        {device.isUltrawide && (
+          <div className="p-6 pl-0 hidden 2xl:block">
+            <UltrawideTelemetryRail
+              stats={stats}
+              profile={profile}
+              endeavors={endeavors}
+              device={device}
+              onOpenLootModal={() => setIsLootModalOpen(true)}
+              onOpenDeviceInspector={() => setIsDeviceInspectorOpen(true)}
+            />
+          </div>
+        )}
       </div>
+    </div>
 
       {/* YouTube-Style Persistent Floating Mini-Focus Player */}
       {activeTab !== "focus" && (
@@ -2052,6 +2045,31 @@ export default function App() {
           storage.saveStats(newStats);
         }}
         onAwardXP={awardXP}
+      />
+
+      {/* Mobile Ergonomic Bottom Navigation Bar (Active on Mobile/Compact Devices) */}
+      {device.isMobile && (
+        <MobileBottomNav
+          activeTab={activeTab}
+          onNavigateTab={(tab) => {
+            focusAudio.playClick();
+            setActiveTab(tab);
+          }}
+          stats={stats}
+          profile={profile}
+          device={device}
+          onOpenCreate={() => setIsCreateModalOpen(true)}
+          onOpenLootModal={() => setIsLootModalOpen(true)}
+          onOpenDeviceInspector={() => setIsDeviceInspectorOpen(true)}
+        />
+      )}
+
+      {/* Device Intelligence & Layout Simulator Modal */}
+      <DeviceInspectorModal
+        isOpen={isDeviceInspectorOpen}
+        onClose={() => setIsDeviceInspectorOpen(false)}
+        device={device}
+        onSetViewOverride={setViewOverride}
       />
     </div>
   );

@@ -1,3 +1,5 @@
+export * from "./device";
+
 export type EndeavorArchetype = "habit" | "meter" | "milestone";
 
 export type Category =

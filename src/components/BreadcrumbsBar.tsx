@@ -18,7 +18,7 @@ import {
   Zap,
   Sparkles,
 } from "lucide-react";
-import { ViewTab, UserProfile, UserStats, UIThemeConfig } from "../types";
+import { ViewTab, UserProfile, UserStats, UIThemeConfig, DeviceInfo } from "../types";
 import { THEME_ACCENTS } from "../lib/theme";
 import { EyeComfortQuickToggle } from "./EyeComfortManager";
 
@@ -27,6 +27,7 @@ interface BreadcrumbsBarProps {
   selectedCategory: string;
   profile: UserProfile;
   stats: UserStats;
+  device?: DeviceInfo;
   isOrbitQueueOpen: boolean;
   onToggleOrbitQueue: () => void;
   onOpenCommandPalette: () => void;
@@ -35,6 +36,7 @@ interface BreadcrumbsBarProps {
   onUpdateThemeConfig?: (cfg: Partial<UIThemeConfig>) => void;
   onTriggerEyeBreakDemo?: () => void;
   onOpenLootModal?: () => void;
+  onOpenDeviceInspector?: () => void;
 }
 
 const TAB_META: Record<ViewTab, { label: string; icon: React.FC<{ className?: string }> }> = {
@@ -66,6 +68,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   selectedCategory,
   profile,
   stats,
+  device,
   isOrbitQueueOpen,
   onToggleOrbitQueue,
   onOpenCommandPalette,
@@ -74,6 +77,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   onUpdateThemeConfig,
   onTriggerEyeBreakDemo,
   onOpenLootModal,
+  onOpenDeviceInspector,
 }) => {
   const currentTheme = THEME_ACCENTS[profile.themeConfig?.accent] || THEME_ACCENTS.emerald;
   const currentTabMeta = TAB_META[activeTab] || TAB_META.tracker;
@@ -149,6 +153,18 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
               title="Open Cosmic Mystery Pods"
             >
               <span>🪐 {stats?.crateKeys || 0}</span>
+            </button>
+          )}
+
+          {/* Detected Hardware Badge */}
+          {device && onOpenDeviceInspector && (
+            <button
+              onClick={onOpenDeviceInspector}
+              className="flex items-center space-x-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 px-2 py-0.5 rounded-md font-bold cursor-pointer transition"
+              title={`Detected: ${device.deviceLabel} (${device.screenWidth}x${device.screenHeight}). Click for Device Intelligence & Simulator.`}
+            >
+              <span>{device.deviceEmoji}</span>
+              <span className="hidden md:inline uppercase text-[9px]">{device.effectiveFormFactor}</span>
             </button>
           )}
         </div>

@@ -34,27 +34,33 @@ import {
   Category,
   BackgroundAnimationMode,
   EyeComfortPreset,
+  DeviceInfo,
 } from "../types";
 import { THEME_ACCENTS, DENSITY_CONFIG, EYE_COMFORT_PRESETS } from "../lib/theme";
 import { LifeSphereOrb } from "./LifeSphereOrb";
 import { focusAudio } from "../lib/audio";
+import { Smartphone, Cpu } from "lucide-react";
 
 interface SettingsViewProps {
   profile: UserProfile;
   stats: UserStats;
+  device?: DeviceInfo;
   onUpdateProfile: (profile: UserProfile) => void;
   onOpenSetupWizard: () => void;
   onResetDefaults: () => void;
   onOpenProfileHub?: () => void;
+  onOpenDeviceInspector?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   profile,
   stats,
+  device,
   onUpdateProfile,
   onOpenSetupWizard,
   onResetDefaults,
   onOpenProfileHub,
+  onOpenDeviceInspector,
 }) => {
   const [formData, setFormData] = useState<UserProfile>({ ...profile });
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -769,6 +775,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Device Intelligence & Adaptive Layout */}
+          <div className="bg-[#06070B]/90 backdrop-blur-3xl rounded-[28px] p-5 border border-cyan-500/20 shadow-[0_0_25px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white uppercase flex items-center space-x-2">
+                  <span>Device Intelligence Engine</span>
+                  {device && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/30">
+                      {device.deviceEmoji} {device.effectiveFormFactor.toUpperCase()}
+                    </span>
+                  )}
+                </h4>
+                <p className="text-[10px] text-slate-400 font-normal">
+                  {device
+                    ? `Auto-detected: ${device.deviceLabel} (${device.screenWidth}×${device.screenHeight}px, ${device.pointer})`
+                    : "Auto-detects phone, tablet, desktop or ultrawide screens & caters UI"}
+                </p>
+              </div>
+            </div>
+            {onOpenDeviceInspector && (
+              <button
+                type="button"
+                onClick={onOpenDeviceInspector}
+                className="px-3.5 py-2 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/30 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 flex items-center space-x-1.5"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Device Specs & Simulator</span>
+              </button>
+            )}
           </div>
 
           {/* Danger / Reset Zone */}
