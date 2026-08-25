@@ -8,55 +8,132 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
-// Lazy server-side Gemini AI client initialization with User-Agent telemetry
-function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+// Dynamic server-side Gemini AI client initialization with user-agent telemetry and fallback key resolution
+function getGeminiClient(customApiKey?: string): GoogleGenAI | null {
+  const apiKey =
+    (customApiKey && customApiKey.trim() !== "" ? customApiKey.trim() : null) ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.VITE_GOOGLE_API_KEY ||
+    process.env.API_KEY;
+
+  if (!apiKey || apiKey.trim() === "" || apiKey === "MY_GEMINI_API_KEY") {
     return null;
   }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        "User-Agent": "aistudio-build",
+
+  try {
+    return new GoogleGenAI({
+      apiKey: apiKey.trim(),
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
       },
-    },
-  });
+    });
+  } catch (err: any) {
+    console.warn("Failed to initialize GoogleGenAI client:", err?.message || err);
+    return null;
+  }
 }
 
-// Resilient Gemini Generate Content with Model Fallbacks (handles temporary 503/429 spikes)
+// Robust JSON extraction helper handling markdown code blocks, backticks, and extra wrapper text
+function extractJson<T = any>(text: string): T {
+  if (!text || typeof text !== "string") {
+    throw new Error("Invalid text for JSON parsing");
+  }
+
+  let cleaned = text.trim();
+
+  // Strip leading and trailing markdown code fences
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (initialErr) {
+    // Attempt searching for outermost curly braces or square brackets
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    const firstBracket = cleaned.indexOf("[");
+    const lastBracket = cleaned.lastIndexOf("]");
+
+    if (firstBrace !== -1 && lastBrace > firstBrace && (firstBracket === -1 || firstBrace < firstBracket)) {
+      const candidate = cleaned.substring(firstBrace, lastBrace + 1);
+      return JSON.parse(candidate);
+    } else if (firstBracket !== -1 && lastBracket > firstBracket) {
+      const candidate = cleaned.substring(firstBracket, lastBracket + 1);
+      return JSON.parse(candidate);
+    }
+
+    throw initialErr;
+  }
+}
+
+// Resilient Gemini Generate Content with multi-model fallback and retry with jitter for temporary 503/429 spikes
 async function generateContentWithFallback(
   ai: GoogleGenAI,
   prompt: string,
-  systemInstruction?: string
+  systemInstruction?: string,
+  isJson: boolean = true
 ): Promise<string> {
-  // Use models in order of current real-time throughput and availability
-  const models = ["gemini-3.1-pro-preview", "gemini-3.7-flash"];
+  const models = ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+  const maxRetriesPerModel = 2;
+
+  let lastError: any = null;
 
   for (const model of models) {
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-        },
-      });
+    for (let attempt = 0; attempt < maxRetriesPerModel; attempt++) {
+      try {
+        const config: any = {};
+        if (systemInstruction) config.systemInstruction = systemInstruction;
+        if (isJson) config.responseMimeType = "application/json";
 
-      const text = response.text?.trim();
-      if (text) {
-        return text;
+        const response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config,
+        });
+
+        // Safely extract generated text across response structures
+        let text = "";
+        if (typeof response.text === "string") {
+          text = response.text.trim();
+        } else if (response.candidates && response.candidates[0]?.content?.parts) {
+          text = response.candidates[0].content.parts
+            .map((p: any) => p.text || "")
+            .join("")
+            .trim();
+        }
+
+        if (text) {
+          return text;
+        }
+      } catch (err: any) {
+        lastError = err;
+        const errMsg = err?.message || String(err);
+        const status = err?.status || err?.code;
+        const isTemporary =
+          status === 503 ||
+          status === 429 ||
+          errMsg.includes("503") ||
+          errMsg.includes("429") ||
+          errMsg.includes("high demand") ||
+          errMsg.includes("UNAVAILABLE");
+
+        if (isTemporary && attempt < maxRetriesPerModel - 1) {
+          const delay = 200 * Math.pow(2, attempt) + Math.floor(Math.random() * 200);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        break; // Proceed to next model in list
       }
-    } catch {
-      // Continue to next available model without throwing unhandled exceptions
-      continue;
     }
   }
 
-  throw new Error("All Gemini model attempts encountered temporary high demand.");
+  throw lastError || new Error("All Gemini model attempts encountered temporary high demand.");
 }
 
 // Health check endpoint
@@ -64,14 +141,90 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Interactive Multi-Turn AI Copilot Chat Endpoint
+app.post(["/api/ai/chat", "/api/ai/copilot-chat"], async (req, res) => {
+  const { message, messages, endeavors, userEnergy, profile, apiKey } = req.body;
+  const userPrompt = message || (Array.isArray(messages) && messages[messages.length - 1]?.text) || "";
+
+  if (!userPrompt || typeof userPrompt !== "string") {
+    return res.status(400).json({ error: "Missing prompt or message" });
+  }
+
+  const customKey = (req.headers["x-gemini-api-key"] as string) || (req.headers["x-api-key"] as string) || apiKey;
+  const ai = getGeminiClient(customKey);
+
+  const buildSmartFallbackReply = () => {
+    const q = userPrompt.toLowerCase();
+    const active = Array.isArray(endeavors) ? endeavors.filter((e: any) => e.status === "active") : [];
+    const topGoal = active.find((e: any) => e.priority === "high") || active[0];
+
+    if (q.includes("hi") || q.includes("hello") || q.includes("hey") || q.includes("who are you")) {
+      return `Hello! I'm your LifeOrbit Autonomous AI Strategist. I can help you plan your day, break down big goals into actionable micro-habits, design custom schedules, and keep your motivation high.\n\nCurrently you have ${active.length} active endeavor${active.length === 1 ? "" : "s"}${topGoal ? ` (including "${topGoal.title}")` : ""}. What would you like to focus on right now?`;
+    }
+
+    if (q.includes("schedule") || q.includes("plan") || q.includes("today") || q.includes("time")) {
+      return `Here is a high-leverage strategy for your day based on ${userEnergy || "medium"} energy:\n\n1. **Deep Focus Block (45-60 min)**: Dedicate your best morning energy to ${topGoal ? `"${topGoal.title}"` : "your primary project"}.\n2. **Micro-Habit Anchor (15 min)**: Knock out quick recurring habits before lunch.\n3. **Recovery & Review**: Use the Timeline view to time-block your remaining hours.\n\nWould you like me to auto-generate time blocks for this in your Timeline?`;
+    }
+
+    if (q.includes("streak") || q.includes("habit") || q.includes("consistent") || q.includes("motivation")) {
+      return `To maintain unwavering consistency with your habits:\n\n• **Lower the activation threshold**: On days with low energy, do just 2 minutes of the habit so you never break the streak.\n• **Anchor to existing triggers**: Stack your habit right after an existing daily routine (like morning coffee or after turning on your computer).\n• **Track daily**: Keep your LifeOrbit cards updated so you can visualize momentum!\n\nWhich specific habit are you finding toughest to stick with?`;
+    }
+
+    return `Here is my direct recommendation for **"${userPrompt}"**:\n\n• **Immediate Next Step**: ${topGoal ? `Take 1 small concrete step on "${topGoal.title}" right now.` : "Pick one key action and start a 25-minute focus session."}\n• **Energy Alignment**: Calibrated for ${userEnergy || "current"} energy — prioritize high-impact clarity over busywork.\n• **Momentum Rule**: 10 minutes of concentrated action beats 2 hours of overthinking.\n\nLet me know if you want me to break this down into atomic milestones, draft a schedule, or adjust your goals!`;
+  };
+
+  if (!ai) {
+    return res.json({ reply: buildSmartFallbackReply(), text: buildSmartFallbackReply() });
+  }
+
+  try {
+    const contextPrompt = `User Profile: ${JSON.stringify(profile || { role: "High Performer" })}
+Current User Energy Level: ${userEnergy || "medium"}
+Active User Endeavors/Goals: ${JSON.stringify(
+      (endeavors || []).map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        archetype: e.archetype,
+        category: e.category,
+        progress: `${e.currentValue}/${e.targetValue} ${e.unit}`,
+        streak: e.streak,
+        priority: e.priority,
+      }))
+    )}
+
+Conversation History:
+${Array.isArray(messages) ? messages.slice(-6).map((m: any) => `${m.role === "user" ? "User" : "Strategist"}: ${m.text}`).join("\n") : ""}
+
+User's Latest Message: "${userPrompt}"`;
+
+    const systemInstruction = `You are LifeOrbit's Autonomous AI Copilot, Performance Strategist, and Productivity Coach.
+Your purpose is to actively listen to the user, answer their questions thoroughly and directly, and provide actionable, intelligent advice tailored to their specific endeavors, habits, energy level, and schedules.
+
+Guidelines:
+1. Actively listen and address whatever the user specifically asks (e.g. brainstorming, overcoming procrastination, optimizing a workout/study routine, troubleshooting consistency, time management).
+2. Reference their actual endeavors, milestones, and energy levels naturally when relevant.
+3. Be encouraging, sharp, concise, and structured (use bullet points and bold headers where appropriate).
+4. Avoid generic repetitive fluff. Give fresh, thoughtful, bespoke responses.
+5. End with a helpful, relevant follow-up or actionable prompt when fitting.`;
+
+    const reply = await generateContentWithFallback(ai, contextPrompt, systemInstruction, false);
+    return res.json({ reply, text: reply });
+  } catch (error: any) {
+    console.warn("AI Chat Fallback activated due to:", error?.message);
+    const fallbackText = buildSmartFallbackReply();
+    return res.json({ reply: fallbackText, text: fallbackText });
+  }
+});
+
 // AI Natural Language Endeavor / Goal Parser
 app.post("/api/ai/parse-endeavor", async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, apiKey } = req.body;
   if (!prompt || typeof prompt !== "string") {
     return res.status(400).json({ error: "Missing or invalid prompt" });
   }
 
-  const ai = getGeminiClient();
+  const customKey = (req.headers["x-gemini-api-key"] as string) || (req.headers["x-api-key"] as string) || apiKey;
+  const ai = getGeminiClient(customKey);
 
   // Intelligent deterministic builder for fallback / instant response
   const buildFallbackParsed = () => {
@@ -165,7 +318,7 @@ Return valid JSON with:
       systemInstruction
     );
 
-    const parsed = JSON.parse(jsonText);
+    const parsed = extractJson(jsonText);
     return res.json(parsed);
   } catch (error: any) {
     console.warn("AI Parse Fallback activated due to:", error?.message);
@@ -173,53 +326,72 @@ Return valid JSON with:
   }
 });
 
-// AI Coach Advice & Strategy Optimizer
-app.post("/api/ai/coach-advice", async (req, res) => {
-  const { endeavors, userEnergy, question } = req.body;
+// AI Coach Advice & Strategy Optimizer (supports both /api/ai/coach-advice and /api/ai/coach)
+app.post(["/api/ai/coach-advice", "/api/ai/coach"], async (req, res) => {
+  const { endeavors, userEnergy, question, prompt, apiKey } = req.body;
+  const userQuery = question || prompt || "Analyze my current progress, streaks, and prioritize my day.";
 
-  const buildFallbackAdvice = () => ({
-    headline: "Stay Consistent & Direct Peak Energy to Highest-Leverage Goals",
-    insights: [
-      "Tackle your most demanding deep work priority during your first high-energy focus block.",
-      "Maintain streak continuity with a 5-minute micro-commitment even on packed days.",
-      "Review milestones weekly to adjust pacing and celebrate incremental breakthroughs."
-    ],
-    actionRecommendation: "Schedule a 35-minute deep focus sprint right now for your primary endeavor.",
-    motivationalQuote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit."
-  });
+  const buildDynamicFallback = () => {
+    const active = Array.isArray(endeavors) ? endeavors.filter((e: any) => e.status === "active") : [];
+    const topGoal = active.find((e: any) => e.priority === "high") || active[0];
+    const goalName = topGoal?.title || "Key Priority";
 
-  const ai = getGeminiClient();
+    return {
+      headline: `Align Peak Energy With ${goalName}`,
+      insights: [
+        `Dedicate your first 35-minute block to "${goalName}" before opening communication apps.`,
+        `Preserve active momentum by logging progress daily, even on low-energy days.`,
+        `Chunk complex phases into 15-minute micro-sprints to eliminate startup friction.`
+      ],
+      actionRecommendation: `Launch a 25-minute focus session for "${goalName}" right now.`,
+      motivationalQuote: "Momentum is built by showing up on the days you least feel like it.",
+      text: `1. Dedicate your first 35-minute block to "${goalName}".\n2. Preserve active momentum by logging progress daily.\n3. Chunk complex phases into 15-minute micro-sprints.`
+    };
+  };
+
+  const customKey = (req.headers["x-gemini-api-key"] as string) || (req.headers["x-api-key"] as string) || apiKey;
+  const ai = getGeminiClient(customKey);
   if (!ai) {
-    return res.json(buildFallbackAdvice());
+    return res.json(buildDynamicFallback());
   }
 
   try {
-    const promptContext = `User endeavors context: ${JSON.stringify(endeavors?.slice(0, 8) || [])}
+    const promptContext = `User endeavors context: ${JSON.stringify(
+      (endeavors || []).slice(0, 8).map((e: any) => ({
+        title: e.title,
+        archetype: e.archetype,
+        category: e.category,
+        progress: `${e.currentValue}/${e.targetValue} ${e.unit}`,
+        streak: e.streak,
+        priority: e.priority,
+      }))
+    )}
 Current user energy level: ${userEnergy || "medium"}
-User question/focus: ${question || "How should I prioritize today and optimize my progress across all activities?"}`;
+User query / prompt: "${userQuery}"`;
 
     const systemInstruction = `You are LifeOrbit's AI Productivity Coach and Performance Strategist.
-Analyze the user's active endeavors (meters, habits, milestones), evaluate their completion velocity and streak status, and provide encouraging, highly actionable advice.
-Return valid JSON format:
+Actively evaluate the user's specific query and their active endeavors (meters, habits, milestones).
+Return structured, highly concrete, actionable guidance formatted as JSON:
 {
-  "headline": "Punchy motivating 1-line tactical recommendation",
-  "insights": ["Specific actionable insight 1", "Specific actionable insight 2", "Specific actionable insight 3"],
+  "headline": "Punchy motivating 1-line tactical recommendation answering their query",
+  "insights": ["Highly specific actionable insight 1", "Specific actionable insight 2", "Specific actionable insight 3"],
   "actionRecommendation": "The single most impactful next action to do right now",
-  "motivationalQuote": "Inspiring relevant quote"
+  "motivationalQuote": "Inspiring relevant quote",
+  "text": "Concise summary of recommendations"
 }`;
 
-    const jsonText = await generateContentWithFallback(ai, promptContext, systemInstruction);
-    const parsed = JSON.parse(jsonText);
+    const jsonText = await generateContentWithFallback(ai, promptContext, systemInstruction, true);
+    const parsed = extractJson(jsonText);
     return res.json(parsed);
   } catch (error: any) {
     console.warn("AI Coach Fallback activated due to:", error?.message);
-    return res.json(buildFallbackAdvice());
+    return res.json(buildDynamicFallback());
   }
 });
 
 // AI Onboarding & Tailored Endeavor Generator
 app.post("/api/ai/onboarding-setup", async (req, res) => {
-  const { name, role, northStarMotto, selectedLifeSpheres, targetFocusHoursPerDay } = req.body;
+  const { name, role, northStarMotto, selectedLifeSpheres, targetFocusHoursPerDay, apiKey } = req.body;
 
   // Build high-craft, role-tailored fallback endeavors so user experience is 100% reliable
   const buildTailoredBlueprint = () => {
@@ -336,7 +508,8 @@ app.post("/api/ai/onboarding-setup", async (req, res) => {
     };
   };
 
-  const ai = getGeminiClient();
+  const customKey = (req.headers["x-gemini-api-key"] as string) || (req.headers["x-api-key"] as string) || apiKey;
+  const ai = getGeminiClient(customKey);
   if (!ai) {
     return res.json(buildTailoredBlueprint());
   }
@@ -384,7 +557,7 @@ Return valid JSON:
       systemInstruction
     );
 
-    const parsed = JSON.parse(jsonText);
+    const parsed = extractJson(jsonText);
     return res.json(parsed);
   } catch (error: any) {
     console.warn("AI Onboarding Fallback activated due to:", error?.message);
@@ -394,7 +567,7 @@ Return valid JSON:
 
 // AI Smart Schedule Generator (Time Blocking)
 app.post("/api/ai/smart-schedule", async (req, res) => {
-  const { endeavors, energyLevel, availableHours } = req.body;
+  const { endeavors, energyLevel, availableHours, apiKey } = req.body;
 
   const buildFallbackSchedule = () => {
     const hours = availableHours || 6;
@@ -448,7 +621,8 @@ app.post("/api/ai/smart-schedule", async (req, res) => {
     };
   };
 
-  const ai = getGeminiClient();
+  const customKey = (req.headers["x-gemini-api-key"] as string) || (req.headers["x-api-key"] as string) || apiKey;
+  const ai = getGeminiClient(customKey);
   if (!ai) {
     return res.json(buildFallbackSchedule());
   }
@@ -478,7 +652,7 @@ Return valid JSON:
       systemInstruction
     );
 
-    const parsed = JSON.parse(jsonText);
+    const parsed = extractJson(jsonText);
     return res.json(parsed);
   } catch (error: any) {
     console.warn("AI Schedule Fallback activated due to:", error?.message);

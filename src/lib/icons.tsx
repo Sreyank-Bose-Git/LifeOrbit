@@ -63,49 +63,48 @@ import {
   LucideIcon,
 } from "lucide-react";
 
-export function getEndeavorIcon(iconName: string, className = "w-5 h-5") {
-  const baseClass = `${className} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] stroke-[2.2]`;
+export function getEndeavorIcon(iconName: string): React.ElementType {
   switch (iconName) {
     case "BookOpen":
-      return <BookOpen className={baseClass} />;
+      return BookOpen;
     case "Sparkles":
-      return <Sparkles className={baseClass} />;
+      return Sparkles;
     case "Cpu":
-      return <Cpu className={baseClass} />;
+      return Cpu;
     case "Code2":
-      return <Code2 className={baseClass} />;
+      return Code2;
     case "DollarSign":
-      return <DollarSign className={baseClass} />;
+      return DollarSign;
     case "Activity":
-      return <Activity className={baseClass} />;
+      return Activity;
     case "Flame":
-      return <Flame className={baseClass} />;
+      return Flame;
     case "Briefcase":
-      return <Briefcase className={baseClass} />;
+      return Briefcase;
     case "GraduationCap":
-      return <GraduationCap className={baseClass} />;
+      return GraduationCap;
     case "Heart":
-      return <Heart className={baseClass} />;
+      return Heart;
     case "Dumbbell":
-      return <Dumbbell className={baseClass} />;
+      return Dumbbell;
     case "Music":
-      return <Music className={baseClass} />;
+      return Music;
     case "Palette":
-      return <Palette className={baseClass} />;
+      return Palette;
     case "Feather":
-      return <Feather className={baseClass} />;
+      return Feather;
     case "Orbit":
-      return <Orbit className={baseClass} />;
+      return Orbit;
     case "Smile":
-      return <Smile className={baseClass} />;
+      return Smile;
     case "Target":
-      return <Target className={baseClass} />;
+      return Target;
     case "Zap":
-      return <Zap className={baseClass} />;
+      return Zap;
     case "Award":
-      return <Award className={baseClass} />;
+      return Award;
     default:
-      return <Target className={baseClass} />;
+      return Target;
   }
 }
 
@@ -181,7 +180,7 @@ export const StylizedIconOrb: React.FC<StylizedIconOrbProps> = ({
         {/* Inner Icon */}
         <div className="relative z-10 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] flex items-center justify-center">
           {iconName
-            ? getEndeavorIcon(iconName, iconSizeMap)
+            ? React.createElement(getEndeavorIcon(iconName), { className: `${iconSizeMap} drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] stroke-[2.2]` })
             : typeof icon === "function"
             ? React.createElement(icon as any, { className: `${iconSizeMap} stroke-[2.2]` })
             : icon}
