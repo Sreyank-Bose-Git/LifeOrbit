@@ -30,6 +30,10 @@ import { LifeSphereOrb } from "./components/LifeSphereOrb";
 import { EyeComfortManager } from "./components/EyeComfortManager";
 import { storage } from "./lib/storage";
 import { THEME_ACCENTS } from "./lib/theme";
+import { FloatingXPOverlay, FloatingXPItem } from "./components/FloatingXPOverlay";
+import { LootCrateModal } from "./components/LootCrateModal";
+import { CosmicBountiesWidget } from "./components/CosmicBountiesWidget";
+import { RapidHabitBlitzBar } from "./components/RapidHabitBlitzBar";
 import { PublicLandingPage } from "./components/PublicLandingPage";
 import { AuthModal } from "./components/AuthModal";
 import { AccountSettingsModal } from "./components/AccountSettingsModal";
@@ -180,6 +184,38 @@ export default function App() {
   // New Detail & Command Palette Modals
   const [selectedEndeavorForDetail, setSelectedEndeavorForDetail] = useState<Endeavor | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isLootModalOpen, setIsLootModalOpen] = useState(false);
+
+  // Gamification & Progression Multipliers
+  const [floatingXPList, setFloatingXPList] = useState<FloatingXPItem[]>([]);
+  const [comboCount, setComboCount] = useState(1);
+  const [comboTimer, setComboTimer] = useState(0);
+
+  // Combo decay timer effect
+  useEffect(() => {
+    if (comboTimer <= 0) {
+      if (comboCount > 1) setComboCount(1);
+      return;
+    }
+    const interval = setInterval(() => {
+      setComboTimer((prev) => {
+        if (prev <= 1) {
+          setComboCount(1);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [comboTimer, comboCount]);
+
+  const triggerFloatingXP = (x: number, y: number, amount: number, reason?: string, combo?: number) => {
+    const id = "fxp-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+    setFloatingXPList((prev) => [...prev, { id, x, y, amount, reason, combo }]);
+    setTimeout(() => {
+      setFloatingXPList((prev) => prev.filter((item) => item.id !== id));
+    }, 1200);
+  };
 
   // Toast Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -368,23 +404,51 @@ export default function App() {
     storage.saveProfile(updatedProfile);
   };
 
-  // Award XP and update stats
-  const awardXP = (amount: number, reason: string) => {
+  // Award XP, apply combo/booster multipliers, level up check, and spawn floating XP
+  const awardXP = (baseAmount: number, reason: string, clickPos?: { x: number; y: number }) => {
+    const comboMult = 1 + (comboCount - 1) * 0.25;
+    const boostMult = stats.activeXpBoostMultiplier || 1.0;
+    const finalMultiplier = Number((comboMult * boostMult).toFixed(2));
+    const finalAmount = Math.max(1, Math.round(baseAmount * finalMultiplier));
+
     setStats((prev) => {
-      const newXp = prev.xp + amount;
-      const newPoints = prev.points + amount;
+      const newXp = prev.xp + finalAmount;
+      const newPoints = prev.points + finalAmount;
+      const oldLevel = prev.level || 1;
       const newLevel = Math.floor(newXp / 500) + 1;
+      const leveledUp = newLevel > oldLevel;
+
+      if (leveledUp) {
+        focusAudio.playLevelUp();
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 } });
+      }
+
       const updated: UserStats = {
         ...prev,
         xp: newXp,
         points: newPoints,
         level: newLevel,
         totalCheckIns: prev.totalCheckIns + 1,
+        crateKeys: (prev.crateKeys || 0) + (leveledUp ? 1 : 0),
       };
       storage.saveStats(updated);
-      showToast(`+${amount} XP: ${reason}`);
       return updated;
     });
+
+    // Spawn floating particle
+    if (clickPos && clickPos.x > 0 && clickPos.y > 0) {
+      triggerFloatingXP(clickPos.x, clickPos.y, finalAmount, reason, comboCount);
+    } else {
+      triggerFloatingXP(
+        typeof window !== "undefined" ? window.innerWidth / 2 : 300,
+        typeof window !== "undefined" ? window.innerHeight * 0.7 : 400,
+        finalAmount,
+        reason,
+        comboCount
+      );
+    }
+
+    showToast(`+${finalAmount} XP ${finalMultiplier > 1 ? `(${finalMultiplier}x BOOST)` : ""}: ${reason}`);
   };
 
   // Reset defaults handler
@@ -394,9 +458,26 @@ export default function App() {
     showToast("Defaults restored.");
   };
 
-  // Quick Log Handler
-  const handleQuickLog = (endeavor: Endeavor, value: number, note?: string) => {
+  // Quick Log Handler with Combo Chaining & Bounty Progression
+  const handleQuickLog = (
+    endeavor: Endeavor,
+    value: number,
+    note?: string,
+    clickPos?: { x: number; y: number }
+  ) => {
     const todayStr = new Date().toISOString().split("T")[0];
+
+    // Escalate combo
+    const nextCombo = Math.min(comboCount + 1, 5);
+    setComboCount(nextCombo);
+    setComboTimer(15);
+
+    // Dynamic procedural audio feedback
+    focusAudio.playCheckInPop(nextCombo);
+    if (nextCombo > 1) {
+      setTimeout(() => focusAudio.playComboSound(nextCombo), 100);
+    }
+
     const updatedEndeavors = endeavors.map((e) => {
       if (e.id !== endeavor.id) return e;
 
@@ -408,6 +489,7 @@ export default function App() {
       let newStreak = e.streakCount;
       if (value > 0 && currentDayVal === 0) {
         newStreak += 1;
+        focusAudio.playStreakFlameSound();
       }
 
       const updatedItem: Endeavor = {
@@ -424,7 +506,7 @@ export default function App() {
 
       if (e.archetype === "meter" && newCurrent >= e.targetValue && e.currentValue < e.targetValue) {
         confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
-        awardXP(150, `Target reached: ${e.title}!`);
+        awardXP(150, `Target reached: ${e.title}!`, clickPos);
       }
 
       return updatedItem;
@@ -433,7 +515,23 @@ export default function App() {
     setEndeavors(updatedEndeavors);
     storage.saveEndeavors(updatedEndeavors);
 
-    // Also record a log entry
+    // Advance daily bounties automatically
+    setStats((prev) => {
+      const bounties = prev.dailyBounties || [];
+      const updatedBounties = bounties.map((b) => {
+        if (b.claimed) return b;
+        if (b.type === "habit_checkin" && (endeavor.archetype === "habit" || endeavor.frequency === "daily")) {
+          const nextProg = Math.min(b.target, b.progress + 1);
+          return { ...b, progress: nextProg, completed: nextProg >= b.target };
+        }
+        return b;
+      });
+      const nextStats = { ...prev, dailyBounties: updatedBounties };
+      storage.saveStats(nextStats);
+      return nextStats;
+    });
+
+    // Record progress log
     const newLog: ProgressLog = {
       id: "log-" + Date.now(),
       endeavorId: endeavor.id,
@@ -451,19 +549,23 @@ export default function App() {
       if (refreshed) setSelectedEndeavorForDetail(refreshed);
     }
 
-    awardXP(25, `Progress logged on ${endeavor.title}`);
+    awardXP(30, `Logged ${endeavor.title}`, clickPos);
   };
 
   // Check in habit from daily briefing
-  const handleCheckInHabit = (endeavorId: string) => {
+  const handleCheckInHabit = (endeavorId: string, clickPos?: { x: number; y: number }) => {
     const target = endeavors.find((e) => e.id === endeavorId);
     if (target) {
-      handleQuickLog(target, 1, "Completed daily habit routine");
+      handleQuickLog(target, 1, "Completed daily habit routine", clickPos);
     }
   };
 
   // Toggle milestone completion
-  const handleToggleMilestone = (endeavorId: string, milestoneId: string) => {
+  const handleToggleMilestone = (
+    endeavorId: string,
+    milestoneId: string,
+    clickPos?: { x: number; y: number }
+  ) => {
     const updatedEndeavors = endeavors.map((e) => {
       if (e.id !== endeavorId) return e;
 
@@ -471,8 +573,9 @@ export default function App() {
         if (m.id === milestoneId) {
           const nextState = !m.completed;
           if (nextState) {
-            confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
-            awardXP(50, `Milestone completed: ${m.title}`);
+            confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+            focusAudio.playQuestRewardSound();
+            awardXP(60, `Milestone completed: ${m.title}`, clickPos);
           }
           return {
             ...m,
@@ -499,6 +602,26 @@ export default function App() {
 
     setEndeavors(updatedEndeavors);
     storage.saveEndeavors(updatedEndeavors);
+
+    // Update milestone bounty progress
+    setStats((prev) => {
+      const bounties = prev.dailyBounties || [];
+      const updatedBounties = bounties.map((b) => {
+        if (b.claimed) return b;
+        if (b.type === "milestone_complete") {
+          const nextProg = Math.min(b.target, b.progress + 1);
+          return { ...b, progress: nextProg, completed: nextProg >= b.target };
+        }
+        return b;
+      });
+      const nextStats = {
+        ...prev,
+        dailyBounties: updatedBounties,
+        totalMilestonesCompleted: (prev.totalMilestonesCompleted || 0) + 1,
+      };
+      storage.saveStats(nextStats);
+      return nextStats;
+    });
 
     if (selectedEndeavorForDetail && selectedEndeavorForDetail.id === endeavorId) {
       const refreshed = updatedEndeavors.find((e) => e.id === endeavorId);
@@ -834,6 +957,7 @@ export default function App() {
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenProfileHub={() => setIsProfileHubOpen(true)}
           onUpdateThemeConfig={handleUpdateThemeConfig}
+          onOpenLootModal={() => setIsLootModalOpen(true)}
           onNavigateTab={(tab) => {
             focusAudio.playClick();
             setActiveTab(tab);
@@ -903,6 +1027,27 @@ export default function App() {
                   onCheckInHabit={handleCheckInHabit}
                   onStartFocus={handleStartFocus}
                   onOpenCreate={() => setIsCreateModalOpen(true)}
+                />
+
+                {/* High-Dopamine Rapid Habit Blitz Bar */}
+                <RapidHabitBlitzBar
+                  endeavors={endeavors}
+                  stats={stats}
+                  comboCount={comboCount}
+                  comboTimeRemaining={comboTimer}
+                  onQuickLog={handleQuickLog}
+                  onOpenCreateModal={() => setIsCreateModalOpen(true)}
+                />
+
+                {/* Daily Cosmic Bounties & Mystery Pod Rewards */}
+                <CosmicBountiesWidget
+                  stats={stats}
+                  onUpdateStats={(newStats) => {
+                    setStats(newStats);
+                    storage.saveStats(newStats);
+                  }}
+                  onAwardXP={awardXP}
+                  onOpenLootModal={() => setIsLootModalOpen(true)}
                 />
 
                 {/* Workspace Header */}
@@ -1690,6 +1835,11 @@ export default function App() {
                   stats={stats}
                   profile={profile}
                   endeavors={endeavors}
+                  onUpdateStats={(newStats) => {
+                    setStats(newStats);
+                    storage.saveStats(newStats);
+                  }}
+                  onOpenLootModal={() => setIsLootModalOpen(true)}
                 />
               </motion.div>
             )}
@@ -1887,6 +2037,21 @@ export default function App() {
         isOpen={isIntegrationsModalOpen}
         onClose={() => setIsIntegrationsModalOpen(false)}
         onSimulatePassiveSync={handleSimulatePassiveSync}
+      />
+
+      {/* Global Floating XP & Combo Particles Overlay */}
+      <FloatingXPOverlay items={floatingXPList} />
+
+      {/* Cosmic Mystery Pod & Loot Crate Unboxing Modal */}
+      <LootCrateModal
+        isOpen={isLootModalOpen}
+        onClose={() => setIsLootModalOpen(false)}
+        stats={stats}
+        onUpdateStats={(newStats) => {
+          setStats(newStats);
+          storage.saveStats(newStats);
+        }}
+        onAwardXP={awardXP}
       />
     </div>
   );

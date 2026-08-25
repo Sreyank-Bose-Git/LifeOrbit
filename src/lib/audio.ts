@@ -568,6 +568,191 @@ class ProceduralAudioEngine {
     }
   }
 
+  // Tactile Affirmative Check-In Pop with combo pitch scaling
+  public playCheckInPop(combo = 1) {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      const baseFreq = 520 + Math.min(combo * 90, 800);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.6, this.ctx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.14);
+    } catch {
+      // Audio safety
+    }
+  }
+
+  // Combo Multiplier Escalation Sound
+  public playComboSound(combo: number) {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      const scale = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98];
+      const count = Math.min(Math.max(combo, 2), scale.length);
+      const notes = scale.slice(0, count);
+
+      notes.forEach((f, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(f, this.ctx!.currentTime + i * 0.045);
+
+        gain.gain.setValueAtTime(0.001, this.ctx!.currentTime + i * 0.045);
+        gain.gain.linearRampToValueAtTime(0.18, this.ctx!.currentTime + i * 0.045 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx!.currentTime + i * 0.045 + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+
+        osc.start(this.ctx!.currentTime + i * 0.045);
+        osc.stop(this.ctx!.currentTime + i * 0.045 + 0.35);
+      });
+    } catch {
+      // Audio safety
+    }
+  }
+
+  // Fiery Streak Flame Ignited
+  public playStreakFlameSound() {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.25);
+
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.35);
+    } catch {
+      // Audio safety
+    }
+  }
+
+  // Epic Mystery Loot Pod Opening
+  public playLootOpenSound() {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      // 1. Bass drop
+      const bass = this.ctx.createOscillator();
+      const bassGain = this.ctx.createGain();
+      bass.type = "sine";
+      bass.frequency.setValueAtTime(140, this.ctx.currentTime);
+      bass.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.8);
+      bassGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.9);
+      bass.connect(bassGain);
+      bassGain.connect(this.sfxGain);
+      bass.start();
+      bass.stop(this.ctx.currentTime + 1.0);
+
+      // 2. Cosmic golden chime cascade
+      [659.25, 783.99, 987.77, 1318.51, 1567.98, 2093].forEach((f, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(f, this.ctx!.currentTime + 0.25 + i * 0.08);
+
+        gain.gain.setValueAtTime(0.001, this.ctx!.currentTime + 0.25 + i * 0.08);
+        gain.gain.linearRampToValueAtTime(0.16, this.ctx!.currentTime + 0.25 + i * 0.08 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx!.currentTime + 0.25 + i * 0.08 + 1.2);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+
+        osc.start(this.ctx!.currentTime + 0.25 + i * 0.08);
+        osc.stop(this.ctx!.currentTime + 2.0);
+      });
+    } catch {
+      // Audio safety
+    }
+  }
+
+  // Quest / Bounty Claimed Sound
+  public playQuestRewardSound() {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((f, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(f, this.ctx!.currentTime + i * 0.06);
+
+        gain.gain.setValueAtTime(0.001, this.ctx!.currentTime + i * 0.06);
+        gain.gain.linearRampToValueAtTime(0.16, this.ctx!.currentTime + i * 0.06 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx!.currentTime + i * 0.06 + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+
+        osc.start(this.ctx!.currentTime + i * 0.06);
+        osc.stop(this.ctx!.currentTime + i * 0.06 + 0.45);
+      });
+    } catch {
+      // Audio safety
+    }
+  }
+
+  // Streak Shield Activation Sound
+  public playShieldActivateSound() {
+    if (!this.soundEffectsEnabled) return;
+    this.initContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(960, this.ctx.currentTime + 0.35);
+
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.45);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.5);
+    } catch {
+      // Audio safety
+    }
+  }
+
   // Zen Optic Relaxation Chime (Warm singing bowl tone for eye breaks)
   public playZenChime() {
     if (!this.soundEffectsEnabled) return;

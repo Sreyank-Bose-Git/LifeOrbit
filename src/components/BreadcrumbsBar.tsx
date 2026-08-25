@@ -34,6 +34,7 @@ interface BreadcrumbsBarProps {
   onNavigateTab: (tab: ViewTab) => void;
   onUpdateThemeConfig?: (cfg: Partial<UIThemeConfig>) => void;
   onTriggerEyeBreakDemo?: () => void;
+  onOpenLootModal?: () => void;
 }
 
 const TAB_META: Record<ViewTab, { label: string; icon: React.FC<{ className?: string }> }> = {
@@ -72,6 +73,7 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
   onNavigateTab,
   onUpdateThemeConfig,
   onTriggerEyeBreakDemo,
+  onOpenLootModal,
 }) => {
   const currentTheme = THEME_ACCENTS[profile.themeConfig?.accent] || THEME_ACCENTS.emerald;
   const currentTabMeta = TAB_META[activeTab] || TAB_META.tracker;
@@ -140,6 +142,15 @@ export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({
             <Zap className="w-3 h-3 text-emerald-400" />
             <span>Lv.{stats?.level || 1} • {stats?.xp || 0} XP</span>
           </span>
+          {onOpenLootModal && (
+            <button
+              onClick={onOpenLootModal}
+              className="flex items-center space-x-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 px-2 py-0.5 rounded-md font-bold cursor-pointer transition shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+              title="Open Cosmic Mystery Pods"
+            >
+              <span>🪐 {stats?.crateKeys || 0}</span>
+            </button>
+          )}
         </div>
 
         {/* Eye Comfort Quick Toggle */}

@@ -7,6 +7,8 @@ import {
   UserProfile,
   UserProfileAccount,
   UIThemeConfig,
+  DailyBounty,
+  LootCratePrize,
 } from "../types";
 
 const STORAGE_KEYS = {
@@ -109,6 +111,137 @@ export const INITIAL_PROFILES: UserProfileAccount[] = [
 ];
 
 export const DEFAULT_PROFILE: UserProfile = INITIAL_PROFILES[0];
+
+export function createDailyBountiesForDate(dateStr: string): DailyBounty[] {
+  return [
+    {
+      id: `bounty-${dateStr}-1`,
+      title: "⚡ Habit Blitz Ignition",
+      description: "Log at least 2 habit check-ins today",
+      category: "habit",
+      xpReward: 80,
+      extraReward: "shards",
+      extraRewardAmount: 20,
+      progress: 0,
+      target: 2,
+      completed: false,
+      claimed: false,
+      icon: "Zap",
+    },
+    {
+      id: `bounty-${dateStr}-2`,
+      title: "🎯 Deep Focus Sprint",
+      description: "Complete a focus sprint session",
+      category: "focus",
+      xpReward: 120,
+      extraReward: "crateKey",
+      extraRewardAmount: 1,
+      progress: 0,
+      target: 1,
+      completed: false,
+      claimed: false,
+      icon: "Flame",
+    },
+    {
+      id: `bounty-${dateStr}-3`,
+      title: "🛡️ High-Priority Velocity",
+      description: "Advance a high priority endeavor or complete a milestone",
+      category: "endeavor",
+      xpReward: 100,
+      extraReward: "shield",
+      extraRewardAmount: 1,
+      progress: 0,
+      target: 1,
+      completed: false,
+      claimed: false,
+      icon: "ShieldCheck",
+    },
+  ];
+}
+
+export const LOOT_CRATE_POOL: LootCratePrize[] = [
+  {
+    id: "loot-title-singularity",
+    type: "title",
+    name: "🌌 Singularity Master",
+    description: "Legendary Title: Master of cosmic time and unbroken execution.",
+    rarity: "legendary",
+    icon: "👑",
+    value: "🌌 Singularity Master",
+  },
+  {
+    id: "loot-title-hyperfocus",
+    type: "title",
+    name: "⚡ Hyper-Focus Overlord",
+    description: "Epic Title: Unrelenting cognitive flow state architect.",
+    rarity: "epic",
+    icon: "⚡",
+    value: "⚡ Hyper-Focus Overlord",
+  },
+  {
+    id: "loot-title-flame",
+    type: "title",
+    name: "🔥 Unstoppable Titan",
+    description: "Epic Title: Holder of ferocious multi-week habit streaks.",
+    rarity: "epic",
+    icon: "🔥",
+    value: "🔥 Unstoppable Titan",
+  },
+  {
+    id: "loot-title-guardian",
+    type: "title",
+    name: "🛡️ Streak Guardian",
+    description: "Rare Title: Defender of daily commitments and rituals.",
+    rarity: "rare",
+    icon: "🛡️",
+    value: "🛡️ Streak Guardian",
+  },
+  {
+    id: "loot-title-architect",
+    type: "title",
+    name: "💎 Momentum Architect",
+    description: "Rare Title: Master strategist who turns ideas into reality.",
+    rarity: "rare",
+    icon: "💎",
+    value: "💎 Momentum Architect",
+  },
+  {
+    id: "loot-shield-1",
+    type: "shield",
+    name: "🛡️ Quantum Streak Shield",
+    description: "Consumable: Protects any habit streak from resetting if a day is missed.",
+    rarity: "rare",
+    icon: "🛡️",
+    value: 1,
+  },
+  {
+    id: "loot-boost-2x",
+    type: "xpBoost",
+    name: "⚡ 2.0x XP Overdrive Frenzy",
+    description: "Active Booster: Doubles all XP gained from check-ins and milestones for 2 hours.",
+    rarity: "epic",
+    icon: "⚡",
+    value: 2.0,
+  },
+  {
+    id: "loot-shards-250",
+    type: "xpBonus",
+    name: "💎 +250 Aura Shards",
+    description: "Currency: Shards used to forge custom aesthetic cosmic auras.",
+    rarity: "common",
+    icon: "💎",
+    value: 250,
+  },
+  {
+    id: "loot-xp-300",
+    type: "xpBonus",
+    name: "✨ +300 Instant XP Capsule",
+    description: "Instant Progression: Accelerate directly towards your next user level.",
+    rarity: "rare",
+    icon: "✨",
+    value: 300,
+  },
+];
 
 const INITIAL_BADGES: Badge[] = [
   {
@@ -696,10 +829,13 @@ export const storage = {
   getStats(profileId?: string): UserStats {
     const pId = profileId || this.getActiveProfileId();
     const key = `lifeorbit_${pId}_stats_v3`;
+    const todayStr = new Date().toISOString().split("T")[0];
+
     try {
       const data = localStorage.getItem(key);
+      let parsed: UserStats;
       if (!data) {
-        const initial: UserStats = {
+        parsed = {
           level: pId === "prof_fitness" ? 5 : pId === "prof_creative" ? 3 : 4,
           xp: pId === "prof_fitness" ? 1120 : pId === "prof_creative" ? 640 : 840,
           points: 1250,
@@ -708,11 +844,49 @@ export const storage = {
           activeStreaks: 5,
           completedEndeavors: 1,
           badges: INITIAL_BADGES,
+          crateKeys: 2,
+          streakShields: 2,
+          auraShards: 120,
+          equippedTitle: "🚀 Orbit Initiate",
+          unlockedTitles: ["🚀 Orbit Initiate", "💎 Momentum Architect"],
+          unlockedAuras: ["aurora", "particles"],
+          activeXpBoostMultiplier: 1.0,
+          dailyBountiesDate: todayStr,
+          dailyBounties: createDailyBountiesForDate(todayStr),
+          dailyAllClearClaimed: false,
         };
-        localStorage.setItem(key, JSON.stringify(initial));
-        return initial;
+        localStorage.setItem(key, JSON.stringify(parsed));
+        return parsed;
+      } else {
+        parsed = JSON.parse(data);
       }
-      return JSON.parse(data);
+
+      // Fill in defaults if older schema was stored
+      if (parsed.crateKeys === undefined) parsed.crateKeys = 2;
+      if (parsed.streakShields === undefined) parsed.streakShields = 2;
+      if (parsed.auraShards === undefined) parsed.auraShards = 120;
+      if (!parsed.equippedTitle) parsed.equippedTitle = "🚀 Orbit Initiate";
+      if (!parsed.unlockedTitles || parsed.unlockedTitles.length === 0) {
+        parsed.unlockedTitles = ["🚀 Orbit Initiate", "💎 Momentum Architect"];
+      }
+      if (!parsed.unlockedAuras) parsed.unlockedAuras = ["aurora", "particles"];
+      if (parsed.activeXpBoostMultiplier === undefined) parsed.activeXpBoostMultiplier = 1.0;
+
+      // Check if XP boost has expired
+      if (parsed.xpBoostExpiresAt && new Date().getTime() > new Date(parsed.xpBoostExpiresAt).getTime()) {
+        parsed.activeXpBoostMultiplier = 1.0;
+        parsed.xpBoostExpiresAt = undefined;
+      }
+
+      // Check if daily bounties need refreshing for today
+      if (parsed.dailyBountiesDate !== todayStr || !parsed.dailyBounties || parsed.dailyBounties.length === 0) {
+        parsed.dailyBountiesDate = todayStr;
+        parsed.dailyBounties = createDailyBountiesForDate(todayStr);
+        parsed.dailyAllClearClaimed = false;
+        localStorage.setItem(key, JSON.stringify(parsed));
+      }
+
+      return parsed;
     } catch {
       return {
         level: 1,
@@ -723,6 +897,16 @@ export const storage = {
         activeStreaks: 1,
         completedEndeavors: 0,
         badges: INITIAL_BADGES,
+        crateKeys: 2,
+        streakShields: 1,
+        auraShards: 50,
+        equippedTitle: "🚀 Orbit Initiate",
+        unlockedTitles: ["🚀 Orbit Initiate"],
+        unlockedAuras: ["aurora"],
+        activeXpBoostMultiplier: 1.0,
+        dailyBountiesDate: todayStr,
+        dailyBounties: createDailyBountiesForDate(todayStr),
+        dailyAllClearClaimed: false,
       };
     }
   },

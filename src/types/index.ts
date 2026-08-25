@@ -76,6 +76,43 @@ export interface UserStats {
   activeStreaks: number;
   completedEndeavors: number;
   badges: Badge[];
+  // Gamification & Dopamine Progression additions
+  crateKeys?: number;
+  streakShields?: number;
+  auraShards?: number;
+  equippedTitle?: string;
+  unlockedTitles?: string[];
+  unlockedAuras?: string[];
+  activeXpBoostMultiplier?: number; // e.g. 1.0, 1.5, 2.0
+  xpBoostExpiresAt?: string; // ISO timestamp
+  dailyBountiesDate?: string;
+  dailyBounties?: DailyBounty[];
+  dailyAllClearClaimed?: boolean;
+}
+
+export interface DailyBounty {
+  id: string;
+  title: string;
+  description: string;
+  category: "habit" | "focus" | "endeavor" | "milestone" | "ai";
+  xpReward: number;
+  extraReward?: "shield" | "crateKey" | "shards";
+  extraRewardAmount?: number;
+  progress: number;
+  target: number;
+  completed: boolean;
+  claimed: boolean;
+  icon: string;
+}
+
+export interface LootCratePrize {
+  id: string;
+  type: "title" | "shield" | "xpBoost" | "aura" | "xpBonus";
+  name: string;
+  description: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  icon: string;
+  value?: any;
 }
 
 export interface Badge {
